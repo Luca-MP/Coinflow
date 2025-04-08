@@ -1,9 +1,10 @@
-package it.pezzotta.coinflow
+package it.pezzotta.coinflow.activity
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import android.os.Parcelable
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Row
 import kotlin.collections.listOf
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,12 +24,16 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dagger.hilt.android.AndroidEntryPoint
 import it.pezzotta.coinflow.ui.theme.CoinflowTheme
+import kotlinx.parcelize.Parcelize
 
-class MainActivity : ComponentActivity() {
+@AndroidEntryPoint
+class MainActivity : AppCompatActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,14 +78,18 @@ fun CryptoList(cryptos: List<Crypto>, modifier: Modifier) {
     }
 }
 
-class Crypto(var name: String, var image: Int, var price: Double)
+@Parcelize
+data class Crypto(var name: String, var image: Int, var price: Double) : Parcelable
 
 @Composable
 fun CryptoItem(crypto: Crypto) {
+    val context = LocalContext.current
     Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(text = crypto.name, modifier = Modifier.padding(horizontal = 8.dp))
         Text(text = crypto.price.toString())
-        IconButton(onClick = { println("click") }) {
+        IconButton(onClick = { with(context) {
+            startActivity(DetailsActivity.newIntent(context, crypto))
+        } }) {
             Icon(
                 imageVector = Icons.Rounded.KeyboardArrowRight,
                 contentDescription = "Details"
