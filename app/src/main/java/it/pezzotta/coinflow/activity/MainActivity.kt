@@ -1,7 +1,6 @@
 package it.pezzotta.coinflow.activity
 
 import android.os.Bundle
-import android.os.Parcelable
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -29,11 +28,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dagger.hilt.android.AndroidEntryPoint
+import it.pezzotta.coinflow.data.model.Coin
+import it.pezzotta.coinflow.data.repository.CoinRepository
 import it.pezzotta.coinflow.ui.theme.CoinflowTheme
-import kotlinx.parcelize.Parcelize
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+    @Inject lateinit var coinRepository: CoinRepository
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,10 +62,10 @@ class MainActivity : AppCompatActivity() {
                     )
                 }) { innerPadding ->
                     CryptoList(
-                        cryptos = listOf(
-                            Crypto("Bitcoin", 1, 25000.0),
-                            Crypto("Ethereum", 2, 1500.0),
-                            Crypto("Litecoin", 3, 100.0),
+                        coins = listOf(
+                            Coin(name = "Bitcoin"),
+                            Coin(name = "Ethereum"),
+                            Coin(name = "Litecoin"),
                         ),
                         modifier = Modifier.padding(innerPadding)
                     )
@@ -67,39 +73,39 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-}
 
-@Composable
-fun CryptoList(cryptos: List<Crypto>, modifier: Modifier) {
-    LazyColumn (modifier = modifier) {
-        items(cryptos) { crypto ->
-            CryptoItem(crypto)
+    @Composable
+    fun CryptoList(coins: List<Coin>, modifier: Modifier) {
+        LazyColumn (modifier = modifier) {
+            items(coins) { coin ->
+                CryptoItem(coin)
+            }
         }
     }
-}
 
-@Parcelize
-data class Crypto(var name: String, var image: Int, var price: Double) : Parcelable
-
-@Composable
-fun CryptoItem(crypto: Crypto) {
-    val context = LocalContext.current
-    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(text = crypto.name, modifier = Modifier.padding(horizontal = 8.dp))
-        Text(text = crypto.price.toString())
-        IconButton(onClick = { with(context) {
-            startActivity(DetailsActivity.newIntent(context, crypto))
-        } }) {
-            Icon(
-                imageVector = Icons.Rounded.KeyboardArrowRight,
-                contentDescription = "Details"
-            )
+    @Composable
+    fun CryptoItem(coin: Coin) {
+        val context = LocalContext.current
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            coin.name?.let { Text(text = it, modifier = Modifier.padding(horizontal = 8.dp)) }
+            IconButton(onClick = { with(context) {
+                startActivity(DetailsActivity.newIntent(context, coin))
+                /*CoroutineScope(Dispatchers.Main).launch {
+                    val result = coinRepository.getCoinMarket()
+                    println(result)
+                }*/
+            } }) {
+                Icon(
+                    imageVector = Icons.Rounded.KeyboardArrowRight,
+                    contentDescription = "Details"
+                )
+            }
         }
     }
-}
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    CoinflowTheme {}
+    @Preview(showBackground = true)
+    @Composable
+    fun GreetingPreview() {
+        CoinflowTheme {}
+    }
 }

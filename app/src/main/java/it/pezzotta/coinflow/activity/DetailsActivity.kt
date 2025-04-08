@@ -17,6 +17,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import dagger.hilt.android.AndroidEntryPoint
+import it.pezzotta.coinflow.data.model.Coin
 import it.pezzotta.coinflow.sdkEqlOrAbv33
 import it.pezzotta.coinflow.ui.theme.CoinflowTheme
 
@@ -24,17 +25,17 @@ import it.pezzotta.coinflow.ui.theme.CoinflowTheme
 class DetailsActivity : AppCompatActivity() {
 
     companion object {
-        private const val CRYPTO = "CRYPTO"
-        fun newIntent(context: Context, crypto: Crypto) =
-            Intent(context, DetailsActivity::class.java).putExtra(CRYPTO, crypto)
+        private const val COIN = "COIN"
+        fun newIntent(context: Context, coin: Coin) =
+            Intent(context, DetailsActivity::class.java).putExtra(COIN, coin)
     }
 
-    private val crypto: Crypto by lazy {
+    private val coin: Coin by lazy {
         if (sdkEqlOrAbv33()) {
-            intent.getParcelableExtra(CRYPTO, Crypto::class.java) as Crypto
+            intent.getParcelableExtra(COIN, Coin::class.java) as Coin
         } else {
-            val crypto: Crypto = intent.getParcelableExtra(CRYPTO)!!
-            crypto
+            val coin: Coin = intent.getParcelableExtra(COIN)!!
+            coin
         }
     }
 
@@ -51,11 +52,13 @@ class DetailsActivity : AppCompatActivity() {
                             titleContentColor = MaterialTheme.colorScheme.primary,
                         ),
                         title = {
-                            Text(
-                                crypto.name,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            coin.name?.let {
+                                Text(
+                                    it,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         },
                     )
                 }) { innerPadding ->
