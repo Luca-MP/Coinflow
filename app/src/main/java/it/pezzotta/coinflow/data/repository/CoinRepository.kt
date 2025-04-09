@@ -11,14 +11,23 @@ class CoinRepository(
     private val coinService: CoinService,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
-    suspend fun getCoinMarket() = withContext(dispatcher) {
-        withContext(dispatcher) {
-            coinService.getCoinMarket(
+    suspend fun getCoinMarket(): Result<List<Coin>> {
+        return try {
+            val response = coinService.getCoinMarket(
                 url = Constants.MARKETS_PATH,
                 key = Constants.API_KEY,
                 vsCurrency = Constants.EUR,
                 perPage = 10,
-            ).body()
+            )
+            if (response.isSuccessful) {
+                response.body()?.let {
+                    Result.success(it)
+                } ?: Result.failure(Exception("Empty body"))
+            } else {
+                Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
@@ -27,7 +36,7 @@ class CoinRepository(
             coinService.getCoinData(
                 url = coin.id!!,
                 key = Constants.API_KEY,
-            ).body()
+            )
         }
     }
 
@@ -40,7 +49,7 @@ class CoinRepository(
                 days = 7,
                 interval = Constants.DAILY_INTERVAL,
                 precision = 2
-            ).body()
+            )
         }
     }
 }

@@ -1,9 +1,6 @@
 package it.pezzotta.coinflow.di
 
 import android.content.Context
-import coil.Coil
-import coil.ImageLoader
-import coil.decode.SvgDecoder
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
@@ -53,14 +50,7 @@ object DIModule {
 
         cache(Cache(File(context.cacheDir, "http_cache"), 300L * 1024L * 1024L))
 
-    }.build().also {
-        Coil.setImageLoader(
-            ImageLoader.Builder(context)
-                .callFactory(it)
-                .components { add(SvgDecoder.Factory()) }
-                .build()
-        )
-    }
+    }.build()
 
     @Provides
     fun provideBWWKService(@CoinRetrofit retrofit: Retrofit): CoinService =
