@@ -2,6 +2,7 @@ package it.pezzotta.coinflow.data.repository
 
 import it.pezzotta.coinflow.Constants
 import it.pezzotta.coinflow.data.model.Coin
+import it.pezzotta.coinflow.data.model.CoinDetail
 import it.pezzotta.coinflow.data.remote.CoinService
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -31,12 +32,21 @@ class CoinRepository(
         }
     }
 
-    suspend fun getCoinData(coin: Coin) = withContext(dispatcher) {
-        withContext(dispatcher) {
-            coinService.getCoinData(
+    suspend fun getCoinData(coin: Coin): Result<CoinDetail> {
+        return try {
+            val response = coinService.getCoinData(
                 url = coin.id!!,
                 key = Constants.API_KEY,
             )
+            if (response.isSuccessful) {
+                response.body()?.let {
+                    Result.success(it)
+                } ?: Result.failure(Exception("Empty body"))
+            } else {
+                Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 

@@ -2,7 +2,9 @@
 
 package it.pezzotta.coinflow.activity
 
+import android.content.Context
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -42,7 +44,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -50,10 +51,9 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import dagger.hilt.android.AndroidEntryPoint
 import it.pezzotta.coinflow.CoinViewModel
+import it.pezzotta.coinflow.common.CoinVariability
 import it.pezzotta.coinflow.data.model.Coin
 import it.pezzotta.coinflow.ui.theme.CoinflowTheme
-import it.pezzotta.coinflow.ui.theme.Green
-import it.pezzotta.coinflow.ui.theme.Red
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -64,19 +64,21 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContent {
             CoinflowTheme {
-                CoinScreen(coinViewModel)
+                CoinsScreen(coinViewModel)
             }
         }
     }
 }
 
 @Composable
-fun CoinScreen(coinViewModel: CoinViewModel) {
+fun CoinsScreen(coinViewModel: CoinViewModel) {
+    val context = LocalContext.current
     val coinMarketState = coinViewModel.coinMarket.collectAsState(initial = null)
     val result = coinMarketState.value
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(), topBar = {
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
             CenterAlignedTopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -86,7 +88,8 @@ fun CoinScreen(coinViewModel: CoinViewModel) {
                     Text("COINFLOW", fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 },
             )
-        }) { innerPadding ->
+        },
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .padding(innerPadding)
@@ -99,12 +102,13 @@ fun CoinScreen(coinViewModel: CoinViewModel) {
 
                 result.isSuccess -> {
                     val coinList = result.getOrNull() ?: emptyList()
-                    CryptoList(coins = coinList)
+                    CryptoList(context = context, coins = coinList)
                 }
 
                 result.isFailure -> {
+                    Toast.makeText(context, "Error: ${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
                     Text(
-                        text = "Error: ${result.exceptionOrNull()?.message}",
+                        text = "Ops! Something went wrong",
                         color = Color.Red,
                         modifier = Modifier.align(Alignment.Center)
                     )
@@ -115,18 +119,17 @@ fun CoinScreen(coinViewModel: CoinViewModel) {
 }
 
 @Composable
-fun CryptoList(coins: List<Coin>) {
+fun CryptoList(context: Context, coins: List<Coin>) {
     LazyColumn {
         items(coins) { coin ->
-            CryptoItem(coin)
+            CryptoItem(context, coin)
             if (coin != coins.last()) HorizontalDivider()
         }
     }
 }
 
 @Composable
-fun CryptoItem(coin: Coin) {
-    val context = LocalContext.current
+fun CryptoItem(context: Context, coin: Coin) {
     Row(
         modifier = Modifier
             .padding(16.dp)
@@ -140,8 +143,7 @@ fun CryptoItem(coin: Coin) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             coin.image?.let {
                 AsyncImage(
-                    model = ImageRequest.Builder(context).data(it).crossfade(true)
-                        .build(),
+                    model = ImageRequest.Builder(context).data(it).crossfade(true).build(),
                     contentDescription = "Coin image",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -153,16 +155,16 @@ fun CryptoItem(coin: Coin) {
             Column {
                 coin.symbol?.let {
                     Text(
-                        text = it.uppercase(),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
+                        text = it.uppercase(), fontWeight = FontWeight.Bold, fontSize = 18.sp
                     )
                 }
                 coin.name?.let { Text(text = it) }
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(horizontalAlignment = AbsoluteAlignment.Right, modifier = Modifier.padding(4.dp)) {
+            Column(
+                horizontalAlignment = AbsoluteAlignment.Right, modifier = Modifier.padding(4.dp)
+            ) {
                 coin.currentPrice?.let {
                     Text(
                         text = "${"%.2f".format(it)} €",
@@ -171,25 +173,10 @@ fun CryptoItem(coin: Coin) {
                         modifier = Modifier.padding(end = 8.dp)
                     )
                 }
-                Row {
-                    coin.priceChange24h?.let {
-                        Text(
-                            text = if (it > 0) "+${"%.2f".format(it) + "%"}" else "%.2f".format(it) + "%",
-                            color = if (it > 0) Green else Red,
-                        )
-                    }
-                    Text("  ")
-                    coin.marketCapChangePercentage24h?.let {
-                        Text(
-                            text = if (it > 0) "+${"%.2f".format(it) + "%  "}" else "%.2f".format(it) + "%  ",
-                            color = if (it > 0) Green else Red,
-                        )
-                    }
-                }
+                CoinVariability(coin)
             }
             Icon(
-                imageVector = Icons.Rounded.KeyboardArrowRight,
-                contentDescription = "Details"
+                imageVector = Icons.Rounded.KeyboardArrowRight, contentDescription = "Details"
             )
         }
     }

@@ -75,6 +75,7 @@ dependencies {
     implementation(libs.okhttp.urlconnection)
     implementation(libs.logging.interceptor)
     implementation(libs.retrofit2.kotlinx.serialization.converter)
+    implementation (libs.compose.charts)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
