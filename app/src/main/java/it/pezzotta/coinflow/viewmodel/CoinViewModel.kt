@@ -25,7 +25,7 @@ class CoinViewModel @Inject constructor(
     val coinDetails: StateFlow<Result<CoinDetails>?> = _coinDetails
 
 
-    private fun getCoinMarket() {
+    fun getCoinMarket() {
         viewModelScope.launch {
             val result = coinRepository.getCoinMarket()
             _coinMarket.value = result

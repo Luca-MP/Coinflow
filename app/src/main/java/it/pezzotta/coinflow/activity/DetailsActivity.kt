@@ -63,6 +63,7 @@ import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.extensions.format
@@ -74,6 +75,7 @@ import ir.ehsannarmani.compose_charts.models.LabelHelperProperties
 import ir.ehsannarmani.compose_charts.models.LabelProperties
 import ir.ehsannarmani.compose_charts.models.Line
 import ir.ehsannarmani.compose_charts.models.PopupProperties
+import it.pezzotta.coinflow.R
 import it.pezzotta.coinflow.common.CoinVariability
 import it.pezzotta.coinflow.common.ErrorMessage
 import it.pezzotta.coinflow.convertToItalianTime
@@ -81,9 +83,9 @@ import it.pezzotta.coinflow.data.model.CoinDetails
 import it.pezzotta.coinflow.findMinAndMax
 import it.pezzotta.coinflow.getNumberOfDays
 import it.pezzotta.coinflow.noRippleClickable
-import it.pezzotta.coinflow.ui.theme.Green
-import it.pezzotta.coinflow.ui.theme.Grey
-import it.pezzotta.coinflow.ui.theme.Red
+import it.pezzotta.coinflow.ui.theme.GreenChart
+import it.pezzotta.coinflow.ui.theme.GreyChart
+import it.pezzotta.coinflow.ui.theme.RedChart
 
 @AndroidEntryPoint
 class DetailsActivity : AppCompatActivity() {
@@ -163,9 +165,9 @@ fun CoinDetailScreen(innerPadding: PaddingValues, coinViewModel: CoinViewModel, 
 
             result.isFailure -> {
                 Toast.makeText(
-                    context, "Error: ${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG
+                    context, "${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG
                 ).show()
-                ErrorMessage()
+                ErrorMessage(coinViewModel, true, coin, 7, 8)
             }
         }
     }
@@ -201,12 +203,19 @@ fun CoinDetail(context: Context, coin: Coin, coinDetails: CoinDetails) {
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleLarge
                         )
-                        Text(" EUR", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = " " + stringResource(R.string.EURO),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                     CoinVariability(coin)
                     Text(
-                        "ATH: ${"%.2f".format(coin.ath)} EUR",
-                        style = MaterialTheme.typography.bodySmall
+                        "${stringResource(R.string.ATH)}: ${"%.2f".format(coin.ath)} ${
+                            stringResource(
+                                R.string.EURO
+                            )
+                        }",
+                        style = MaterialTheme.typography.bodySmall,
                     )
                 }
             }
@@ -222,13 +231,11 @@ fun CoinDetail(context: Context, coin: Coin, coinDetails: CoinDetails) {
         }
         CoinChart(coinDetails)
         Text(
-            "Last update: ${coin.lastUpdated?.let { convertToItalianTime(it) }}",
-            fontSize = 10.sp,
-            modifier = Modifier
+            "${stringResource(R.string.last_update)}: ${
+            coin.lastUpdated?.let { convertToItalianTime(it) }
+        }", fontSize = 10.sp, modifier = Modifier
                 .align(Alignment.End)
-                .padding(bottom = 16.dp)
-
-        )
+                .padding(bottom = 16.dp))
         ExpandableDescription(coin, coinDetails.coinData.description?.en ?: "")
     }
 }
@@ -267,18 +274,18 @@ fun CoinChart(coinDetails: CoinDetails) {
                 textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground)
             ),
             popupProperties = PopupProperties(
-                containerColor = Grey, contentBuilder = { it.format(2) }),
+                containerColor = GreyChart, contentBuilder = { it.format(2) }),
             data = remember {
                 listOf(
                     Line(
                         label = "${coinDetails.coinData.name!!}/Euro",
                         values = coinDetails.coinMarketHistory.prices.map { it[1] },
-                        color = if (firstChartValue!! > lastChartValue!!) SolidColor(Red) else SolidColor(
-                            Green
+                        color = if (firstChartValue!! > lastChartValue!!) SolidColor(RedChart) else SolidColor(
+                            GreenChart
                         ),
-                        firstGradientFillColor = if (firstChartValue > lastChartValue) Red.copy(
+                        firstGradientFillColor = if (firstChartValue > lastChartValue) RedChart.copy(
                             alpha = .5f
-                        ) else Green.copy(alpha = .5f),
+                        ) else GreenChart.copy(alpha = .5f),
                         secondGradientFillColor = Color.Transparent,
                         strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
                         gradientAnimationDelay = 1000,
@@ -313,7 +320,8 @@ fun ExpandableDescription(coin: Coin, description: String) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "What is ${coin.name}?", style = MaterialTheme.typography.titleLarge
+                stringResource(R.string.what_is, coin.name!!),
+                style = MaterialTheme.typography.titleLarge
             )
             Icon(
                 imageVector = if (isExpanded.value) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,

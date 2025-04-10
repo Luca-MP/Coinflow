@@ -43,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -50,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import dagger.hilt.android.AndroidEntryPoint
+import it.pezzotta.coinflow.R
 import it.pezzotta.coinflow.viewmodel.CoinViewModel
 import it.pezzotta.coinflow.common.CoinVariability
 import it.pezzotta.coinflow.common.ErrorMessage
@@ -86,7 +88,11 @@ fun CoinsScreen(coinViewModel: CoinViewModel) {
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
                 title = {
-                    Text("COINFLOW", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        stringResource(R.string.app_name),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 },
             )
         },
@@ -108,9 +114,9 @@ fun CoinsScreen(coinViewModel: CoinViewModel) {
 
                 result.isFailure -> {
                     Toast.makeText(
-                        context, "Error: ${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG
+                        context, "${result.exceptionOrNull()?.message}", Toast.LENGTH_SHORT
                     ).show()
-                    ErrorMessage()
+                    ErrorMessage(coinViewModel, false, Coin(), 7, 8)
                 }
             }
         }
