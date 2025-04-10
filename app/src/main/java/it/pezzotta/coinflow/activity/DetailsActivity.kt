@@ -11,7 +11,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -69,14 +68,19 @@ import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.extensions.format
 import ir.ehsannarmani.compose_charts.models.AnimationMode
 import ir.ehsannarmani.compose_charts.models.DrawStyle
+import ir.ehsannarmani.compose_charts.models.GridProperties
 import ir.ehsannarmani.compose_charts.models.HorizontalIndicatorProperties
+import ir.ehsannarmani.compose_charts.models.LabelHelperProperties
+import ir.ehsannarmani.compose_charts.models.LabelProperties
 import ir.ehsannarmani.compose_charts.models.Line
 import ir.ehsannarmani.compose_charts.models.PopupProperties
 import it.pezzotta.coinflow.common.CoinVariability
 import it.pezzotta.coinflow.common.ErrorMessage
-import it.pezzotta.coinflow.convertTime
+import it.pezzotta.coinflow.convertToItalianTime
 import it.pezzotta.coinflow.data.model.CoinDetails
 import it.pezzotta.coinflow.findMinAndMax
+import it.pezzotta.coinflow.getNumberOfDays
+import it.pezzotta.coinflow.noRippleClickable
 import it.pezzotta.coinflow.ui.theme.Green
 import it.pezzotta.coinflow.ui.theme.Grey
 import it.pezzotta.coinflow.ui.theme.Red
@@ -109,7 +113,7 @@ class DetailsActivity : AppCompatActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
                     TopAppBar(
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            containerColor = MaterialTheme.colorScheme.background,
                             titleContentColor = MaterialTheme.colorScheme.primary,
                         ),
                         navigationIcon = {
@@ -159,9 +163,7 @@ fun CoinDetailScreen(innerPadding: PaddingValues, coinViewModel: CoinViewModel, 
 
             result.isFailure -> {
                 Toast.makeText(
-                    context,
-                    "Error: ${result.exceptionOrNull()?.message}",
-                    Toast.LENGTH_LONG
+                    context, "Error: ${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG
                 ).show()
                 ErrorMessage()
             }
@@ -220,11 +222,12 @@ fun CoinDetail(context: Context, coin: Coin, coinDetails: CoinDetails) {
         }
         CoinChart(coinDetails)
         Text(
-            "Last update: ${coin.lastUpdated?.let { convertTime(it) }}",
+            "Last update: ${coin.lastUpdated?.let { convertToItalianTime(it) }}",
             fontSize = 10.sp,
             modifier = Modifier
                 .align(Alignment.End)
                 .padding(bottom = 16.dp)
+
         )
         ExpandableDescription(coin, coinDetails.coinData.description?.en ?: "")
     }
@@ -238,27 +241,44 @@ fun CoinChart(coinDetails: CoinDetails) {
     val maxChartValue: Double? = coinDetails.coinMarketHistory.prices?.let { prices ->
         findMinAndMax(prices).second.let { it + (it * 10) / 100 }
     }
+    val firstChartValue: Double? = coinDetails.coinMarketHistory.prices?.get(1)?.first()
+    val lastChartValue: Double? = coinDetails.coinMarketHistory.prices?.get(1)?.last()
 
     Box(modifier = Modifier.height(400.dp)) {
         LineChart(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = 16.dp),
-            indicatorProperties = HorizontalIndicatorProperties(contentBuilder = { it.format(2) }),
+            labelProperties = LabelProperties(
+                enabled = true,
+                textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground),
+                labels = getNumberOfDays(
+                    coinDetails.coinMarketHistory.prices?.get(0)?.get(0)?.toLong()!!
+                ),
+            ),
+            labelHelperProperties = LabelHelperProperties(textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground)),
+            gridProperties = GridProperties(
+                yAxisProperties = GridProperties.AxisProperties(
+                    lineCount = 0
+                )
+            ),
+            indicatorProperties = HorizontalIndicatorProperties(
+                contentBuilder = { it.format(2) },
+                textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground)
+            ),
             popupProperties = PopupProperties(
-                containerColor = Grey,
-                contentBuilder = { it.format(2) }),
+                containerColor = Grey, contentBuilder = { it.format(2) }),
             data = remember {
                 listOf(
                     Line(
                         label = "${coinDetails.coinData.name!!}/Euro",
-                        values = coinDetails.coinMarketHistory.prices?.map { it[1] }!!,
-                        color = if (minChartValue!! > maxChartValue!!) SolidColor(Red) else SolidColor(
+                        values = coinDetails.coinMarketHistory.prices.map { it[1] },
+                        color = if (firstChartValue!! > lastChartValue!!) SolidColor(Red) else SolidColor(
                             Green
                         ),
-                        firstGradientFillColor = if (minChartValue > maxChartValue) Red.copy(alpha = .5f) else Green.copy(
+                        firstGradientFillColor = if (firstChartValue > lastChartValue) Red.copy(
                             alpha = .5f
-                        ),
+                        ) else Green.copy(alpha = .5f),
                         secondGradientFillColor = Color.Transparent,
                         strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
                         gradientAnimationDelay = 1000,
@@ -284,7 +304,7 @@ fun ExpandableDescription(coin: Coin, description: String) {
                 color = MaterialTheme.colorScheme.primaryContainer,
                 shape = RoundedCornerShape(16.dp)
             )
-            .clickable { isExpanded.value = !isExpanded.value }) {
+            .noRippleClickable { isExpanded.value = !isExpanded.value }) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
@@ -293,8 +313,7 @@ fun ExpandableDescription(coin: Coin, description: String) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "What is ${coin.name}?",
-                style = MaterialTheme.typography.titleLarge
+                "What is ${coin.name}?", style = MaterialTheme.typography.titleLarge
             )
             Icon(
                 imageVector = if (isExpanded.value) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
