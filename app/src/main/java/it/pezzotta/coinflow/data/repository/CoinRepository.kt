@@ -2,16 +2,12 @@ package it.pezzotta.coinflow.data.repository
 
 import it.pezzotta.coinflow.Constants
 import it.pezzotta.coinflow.data.model.Coin
-import it.pezzotta.coinflow.data.model.CoinDetail
+import it.pezzotta.coinflow.data.model.CoinData
+import it.pezzotta.coinflow.data.model.CoinDetails
+import it.pezzotta.coinflow.data.model.CoinMarketHistory
 import it.pezzotta.coinflow.data.remote.CoinService
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
-class CoinRepository(
-    private val coinService: CoinService,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
-) {
+class CoinRepository(private val coinService: CoinService) {
     suspend fun getCoinMarket(): Result<List<Coin>> {
         return try {
             val response = coinService.getCoinMarket(
@@ -32,7 +28,7 @@ class CoinRepository(
         }
     }
 
-    suspend fun getCoinData(coin: Coin): Result<CoinDetail> {
+    private suspend fun getCoinData(coin: Coin): Result<CoinData> {
         return try {
             val response = coinService.getCoinData(
                 url = coin.id!!,
@@ -50,16 +46,51 @@ class CoinRepository(
         }
     }
 
-    suspend fun getCoinMarketHistory(coin: Coin) = withContext(dispatcher) {
-        withContext(dispatcher) {
-            coinService.getCoinMarketHistory(
+    private suspend fun getCoinMarketHistory(
+        coin: Coin, days: Int, precision: Int
+    ): Result<CoinMarketHistory> {
+        return try {
+            val response = coinService.getCoinMarketHistory(
                 url = coin.id!! + Constants.MARKET_CHART_PATH,
                 key = Constants.API_KEY,
                 vsCurrency = Constants.EUR,
-                days = 7,
-                interval = Constants.DAILY_INTERVAL,
-                precision = 2
+                days = days,
+                precision = precision
             )
+            if (response.isSuccessful) {
+                response.body()?.let {
+                    Result.success(it)
+                } ?: Result.failure(Exception("Empty body"))
+            } else {
+                Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getCoinDetails(
+        coin: Coin, days: Int, precision: Int
+    ): Result<CoinDetails> {
+        return try {
+            val coinDataResult = getCoinData(coin)
+            if (coinDataResult.isFailure) {
+                return Result.failure(coinDataResult.exceptionOrNull()!!)
+            }
+
+            val coinMarketHistoryResult = getCoinMarketHistory(coin, days, precision)
+            if (coinMarketHistoryResult.isFailure) {
+                return Result.failure(coinMarketHistoryResult.exceptionOrNull()!!)
+            }
+
+            Result.success(
+                CoinDetails(
+                    coinData = coinDataResult.getOrThrow(),
+                    coinMarketHistory = coinMarketHistoryResult.getOrThrow()
+                )
+            )
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

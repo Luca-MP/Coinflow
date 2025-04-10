@@ -10,6 +10,8 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,7 +27,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -33,7 +34,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,22 +52,34 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dagger.hilt.android.AndroidEntryPoint
-import it.pezzotta.coinflow.CoinViewModel
+import it.pezzotta.coinflow.viewmodel.CoinViewModel
 import it.pezzotta.coinflow.data.model.Coin
-import it.pezzotta.coinflow.data.model.CoinDetail
 import it.pezzotta.coinflow.sdkEqlOrAbv33
 import it.pezzotta.coinflow.ui.theme.CoinflowTheme
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import ir.ehsannarmani.compose_charts.LineChart
+import ir.ehsannarmani.compose_charts.extensions.format
 import ir.ehsannarmani.compose_charts.models.AnimationMode
 import ir.ehsannarmani.compose_charts.models.DrawStyle
+import ir.ehsannarmani.compose_charts.models.HorizontalIndicatorProperties
 import ir.ehsannarmani.compose_charts.models.Line
+import ir.ehsannarmani.compose_charts.models.PopupProperties
 import it.pezzotta.coinflow.common.CoinVariability
+import it.pezzotta.coinflow.common.ErrorMessage
+import it.pezzotta.coinflow.convertTime
+import it.pezzotta.coinflow.data.model.CoinDetails
+import it.pezzotta.coinflow.findMinAndMax
+import it.pezzotta.coinflow.ui.theme.Green
+import it.pezzotta.coinflow.ui.theme.Grey
+import it.pezzotta.coinflow.ui.theme.Red
 
 @AndroidEntryPoint
 class DetailsActivity : AppCompatActivity() {
@@ -95,7 +107,7 @@ class DetailsActivity : AppCompatActivity() {
         setContent {
             CoinflowTheme {
                 Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
-                    CenterAlignedTopAppBar(
+                    TopAppBar(
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
                             titleContentColor = MaterialTheme.colorScheme.primary,
@@ -111,11 +123,7 @@ class DetailsActivity : AppCompatActivity() {
                         },
                         title = {
                             coin.name?.let {
-                                Text(
-                                    it,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                                Text(it, fontSize = 24.sp)
                             }
                         },
                     )
@@ -130,11 +138,10 @@ class DetailsActivity : AppCompatActivity() {
 @Composable
 fun CoinDetailScreen(innerPadding: PaddingValues, coinViewModel: CoinViewModel, coin: Coin) {
     val context = LocalContext.current
-    LaunchedEffect(coin) {
-        coinViewModel.getCoinData(coin)
-    }
-    val coinDetails by coinViewModel.coinData.collectAsState(initial = null)
+    val coinDetails by coinViewModel.coinDetails.collectAsState(initial = null)
     val result = coinDetails
+
+    LaunchedEffect(coin) { coinViewModel.getCoinDetails(coin, 7, 8) }
 
     Box(
         modifier = Modifier
@@ -147,7 +154,7 @@ fun CoinDetailScreen(innerPadding: PaddingValues, coinViewModel: CoinViewModel, 
             }
 
             result.isSuccess -> {
-                CoinDetails(context, coin = coin, coinDetail = result.getOrNull())
+                result.getOrNull()?.let { CoinDetail(context, coin = coin, coinDetails = it) }
             }
 
             result.isFailure -> {
@@ -156,30 +163,27 @@ fun CoinDetailScreen(innerPadding: PaddingValues, coinViewModel: CoinViewModel, 
                     "Error: ${result.exceptionOrNull()?.message}",
                     Toast.LENGTH_LONG
                 ).show()
-                Text(
-                    text = "Ops! Something went wrong",
-                    color = Color.Red,
-                    modifier = Modifier.align(Alignment.Center)
-                )
+                ErrorMessage()
             }
         }
     }
 }
 
 @Composable
-fun CoinDetails(context: Context, coin: Coin, coinDetail: CoinDetail?) {
+fun CoinDetail(context: Context, coin: Coin, coinDetails: CoinDetails) {
     val scrollState = rememberScrollState()
-
-    Column(modifier = Modifier
-        .padding(16.dp)
-        .verticalScroll(scrollState)) {
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+            .verticalScroll(scrollState)
+    ) {
         Row(
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AsyncImage(
-                    model = ImageRequest.Builder(context).data(coinDetail?.image?.large)
+                    model = ImageRequest.Builder(context).data(coinDetails.coinData.image?.large)
                         .crossfade(true).build(),
                     contentDescription = "Coin image",
                     contentScale = ContentScale.Crop,
@@ -205,7 +209,7 @@ fun CoinDetails(context: Context, coin: Coin, coinDetail: CoinDetail?) {
                 }
             }
             IconButton(onClick = {
-                val url = coinDetail?.links?.homepage?.first()
+                val url = coinDetails.coinData.links?.homepage?.first()
                 val intent = Intent(Intent.ACTION_VIEW, url?.toUri())
                 context.startActivity(intent)
             }) {
@@ -214,34 +218,47 @@ fun CoinDetails(context: Context, coin: Coin, coinDetail: CoinDetail?) {
                 )
             }
         }
-        CoinChart(coinDetail)
-        ExpandableDescription(coinDetail?.description?.en!!)
+        CoinChart(coinDetails)
+        Text(
+            "Last update: ${coin.lastUpdated?.let { convertTime(it) }}",
+            fontSize = 10.sp,
+            modifier = Modifier
+                .align(Alignment.End)
+                .padding(bottom = 16.dp)
+        )
+        ExpandableDescription(coin, coinDetails.coinData.description?.en ?: "")
     }
 }
 
 @Composable
-fun CoinChart(coinDetail: CoinDetail?) {
+fun CoinChart(coinDetails: CoinDetails) {
+    val minChartValue: Double? = coinDetails.coinMarketHistory.prices?.let { prices ->
+        findMinAndMax(prices).first.let { it - (it * 10) / 100 }
+    }
+    val maxChartValue: Double? = coinDetails.coinMarketHistory.prices?.let { prices ->
+        findMinAndMax(prices).second.let { it + (it * 10) / 100 }
+    }
+
     Box(modifier = Modifier.height(400.dp)) {
         LineChart(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = 16.dp),
+            indicatorProperties = HorizontalIndicatorProperties(contentBuilder = { it.format(2) }),
+            popupProperties = PopupProperties(
+                containerColor = Grey,
+                contentBuilder = { it.format(2) }),
             data = remember {
                 listOf(
                     Line(
-                        label = "${coinDetail?.name!!}/Euro",
-                        values = listOf(
-                            75695.38,
-                            75301.41,
-                            76509.59,
-                            76275.9,
-                            71140.7,
-                            72531.24,
-                            69491.45,
-                            75900.74
+                        label = "${coinDetails.coinData.name!!}/Euro",
+                        values = coinDetails.coinMarketHistory.prices?.map { it[1] }!!,
+                        color = if (minChartValue!! > maxChartValue!!) SolidColor(Red) else SolidColor(
+                            Green
                         ),
-                        color = SolidColor(Color(0xFF23af92)),
-                        firstGradientFillColor = Color(0xFF2BC0A1).copy(alpha = .5f),
+                        firstGradientFillColor = if (minChartValue > maxChartValue) Red.copy(alpha = .5f) else Green.copy(
+                            alpha = .5f
+                        ),
                         secondGradientFillColor = Color.Transparent,
                         strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
                         gradientAnimationDelay = 1000,
@@ -249,30 +266,49 @@ fun CoinChart(coinDetail: CoinDetail?) {
                     )
                 )
             },
-            minValue = 60000.0,
-            maxValue = 80000.0,
+            minValue = minChartValue!!,
+            maxValue = maxChartValue!!,
             animationMode = AnimationMode.Together(delayBuilder = { it * 500L }),
         )
     }
 }
 
 @Composable
-fun ExpandableDescription(content: String) {
+fun ExpandableDescription(coin: Coin, description: String) {
     val isExpanded = remember { mutableStateOf(false) }
     val maxLines = if (isExpanded.value) Int.MAX_VALUE else 5
 
-    Column {
+    Column(
+        modifier = Modifier
+            .background(
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clickable { isExpanded.value = !isExpanded.value }) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "What is ${coin.name}?",
+                style = MaterialTheme.typography.titleLarge
+            )
+            Icon(
+                imageVector = if (isExpanded.value) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
+                contentDescription = "Details"
+            )
+        }
         Text(
-            text = content,
+            text = description,
             maxLines = maxLines,
             style = TextStyle(fontSize = 16.sp),
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(vertical = 16.dp)
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp)
         )
-        TextButton(
-            modifier = Modifier.align(Alignment.End),
-            onClick = { isExpanded.value = !isExpanded.value }) {
-            Text(if (isExpanded.value) "Show Less" else "Read More")
-        }
     }
 }

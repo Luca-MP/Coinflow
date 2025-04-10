@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 
 @Parcelize
 @Serializable
-data class CoinDetail(
+data class CoinData(
     @SerialName("id") val id: String? = null,
     @SerialName("symbol") val symbol: String? = null,
     @SerialName("name") val name: String? = null,

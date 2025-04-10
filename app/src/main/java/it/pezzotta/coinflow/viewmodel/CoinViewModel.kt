@@ -1,10 +1,10 @@
-package it.pezzotta.coinflow
+package it.pezzotta.coinflow.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.pezzotta.coinflow.data.model.Coin
-import it.pezzotta.coinflow.data.model.CoinDetail
+import it.pezzotta.coinflow.data.model.CoinDetails
 import it.pezzotta.coinflow.data.repository.CoinRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,15 +16,14 @@ class CoinViewModel @Inject constructor(
     private val coinRepository: CoinRepository
 ) : ViewModel() {
 
-    init {
-        getCoinMarket()
-    }
+    init { getCoinMarket() }
 
     private val _coinMarket = MutableStateFlow<Result<List<Coin>>?>(null)
     val coinMarket: StateFlow<Result<List<Coin>>?> = _coinMarket
 
-    private val _coinData = MutableStateFlow<Result<CoinDetail>?>(null)
-    val coinData: StateFlow<Result<CoinDetail>?> = _coinData
+    private val _coinDetails = MutableStateFlow<Result<CoinDetails>?>(null)
+    val coinDetails: StateFlow<Result<CoinDetails>?> = _coinDetails
+
 
     private fun getCoinMarket() {
         viewModelScope.launch {
@@ -33,10 +32,10 @@ class CoinViewModel @Inject constructor(
         }
     }
 
-    fun getCoinData(coin: Coin) {
+    fun getCoinDetails(coin: Coin, days: Int, precision: Int) {
         viewModelScope.launch {
-            val result = coinRepository.getCoinData(coin)
-            _coinData.value = result
+            val result = coinRepository.getCoinDetails(coin, days, precision)
+            _coinDetails.value = result
         }
     }
 }
