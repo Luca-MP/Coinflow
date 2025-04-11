@@ -1,10 +1,11 @@
 <resources>
-    <string name="app_name">Coinflow</string>
+    <string name="app_name">CoinFlow</string>
     <string name="ops">Ops!\nSomething went wrong.</string>
-    <string name="warning_sign">⚠️</string>
+    <string name="warning_sign">⚠️\n</string>
     <string name="retry">Retry</string>
     <string name="EURO">Euro</string>
     <string name="ATH">ATH</string>
     <string name="last_update">Last update</string>
     <string name="what_is">What is %1$s? </string>
+    <string name="today">today</string>
 </resources>

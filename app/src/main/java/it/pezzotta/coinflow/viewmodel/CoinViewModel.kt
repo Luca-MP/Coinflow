@@ -16,7 +16,9 @@ class CoinViewModel @Inject constructor(
     private val coinRepository: CoinRepository
 ) : ViewModel() {
 
-    init { getCoinMarket() }
+    init {
+        getCoinMarket()
+    }
 
     private val _coinMarket = MutableStateFlow<Result<List<Coin>>?>(null)
     val coinMarket: StateFlow<Result<List<Coin>>?> = _coinMarket

@@ -7,6 +7,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.util.Calendar
 import java.text.SimpleDateFormat
 import java.time.Instant
@@ -33,8 +35,7 @@ fun convertToItalianTime(utc: String): String {
 
 @RequiresApi(Build.VERSION_CODES.O)
 private fun convertToItalianTimeAbv26(utc: String): String =
-    Instant.parse(utc)
-        .atZone(ZoneId.of(italianTimeZone))
+    Instant.parse(utc).atZone(ZoneId.of(italianTimeZone))
         .format(DateTimeFormatter.ofPattern(italianDatePattern, Locale.ITALY))
 
 private fun convertToItalianTimeLwr26(utc: String): String {
@@ -69,7 +70,7 @@ fun getNumberOfDays(startMillis: Long): List<String> {
     val days = mutableListOf<String>()
     while (!startCal.after(endCal)) {
         if (startCal.get(Calendar.DAY_OF_MONTH).toString().length == 1) {
-            days.add("0"+startCal.get(Calendar.DAY_OF_MONTH))
+            days.add("0" + startCal.get(Calendar.DAY_OF_MONTH))
             startCal.add(Calendar.DATE, 1)
         } else {
             days.add(startCal.get(Calendar.DAY_OF_MONTH).toString())
@@ -92,4 +93,12 @@ fun Modifier.noRippleClickable(onClick: () -> Unit) = composed {
         indication = null,
         onClick = onClick
     )
+}
+
+fun Double.prettyFormat(): String {
+    val symbols = DecimalFormatSymbols().apply {
+        groupingSeparator = '.'
+        decimalSeparator = ','
+    }
+    return DecimalFormat("#,##0.00", symbols).format(this)
 }

@@ -61,10 +61,12 @@ import coil.request.ImageRequest
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.extensions.format
 import ir.ehsannarmani.compose_charts.models.AnimationMode
@@ -78,11 +80,18 @@ import ir.ehsannarmani.compose_charts.models.PopupProperties
 import it.pezzotta.coinflow.R
 import it.pezzotta.coinflow.common.CoinVariability
 import it.pezzotta.coinflow.common.ErrorMessage
+import it.pezzotta.coinflow.common.CoinPlaceholder
 import it.pezzotta.coinflow.convertToItalianTime
+import it.pezzotta.coinflow.data.model.CoinData
 import it.pezzotta.coinflow.data.model.CoinDetails
+import it.pezzotta.coinflow.data.model.CoinMarketHistory
+import it.pezzotta.coinflow.data.model.Description
+import it.pezzotta.coinflow.data.model.Image
+import it.pezzotta.coinflow.data.model.Links
 import it.pezzotta.coinflow.findMinAndMax
 import it.pezzotta.coinflow.getNumberOfDays
 import it.pezzotta.coinflow.noRippleClickable
+import it.pezzotta.coinflow.prettyFormat
 import it.pezzotta.coinflow.ui.theme.GreenChart
 import it.pezzotta.coinflow.ui.theme.GreyChart
 import it.pezzotta.coinflow.ui.theme.RedChart
@@ -187,6 +196,7 @@ fun CoinDetail(context: Context, coin: Coin, coinDetails: CoinDetails) {
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AsyncImage(
+                    placeholder = CoinPlaceholder(R.drawable.app_icon),
                     model = ImageRequest.Builder(context).data(coinDetails.coinData.image?.large)
                         .crossfade(true).build(),
                     contentDescription = "Coin image",
@@ -199,7 +209,7 @@ fun CoinDetail(context: Context, coin: Coin, coinDetails: CoinDetails) {
                 Column(horizontalAlignment = Alignment.Start) {
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
-                            "%.2f".format(coin.currentPrice),
+                            coin.currentPrice?.prettyFormat().toString(),
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleLarge
                         )
@@ -208,9 +218,9 @@ fun CoinDetail(context: Context, coin: Coin, coinDetails: CoinDetails) {
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
-                    CoinVariability(coin)
+                    CoinVariability(coin, true)
                     Text(
-                        "${stringResource(R.string.ATH)}: ${"%.2f".format(coin.ath)} ${
+                        "${stringResource(R.string.ATH)}: ${coin.ath?.prettyFormat()} ${
                             stringResource(
                                 R.string.EURO
                             )
@@ -337,5 +347,43 @@ fun ExpandableDescription(coin: Coin, description: String) {
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 16.dp)
         )
+    }
+}
+
+@Preview
+@Composable
+fun CoinDetailPreview() {
+    CoinflowTheme {
+        Surface {
+            Box(modifier = Modifier.fillMaxSize()) {
+                CoinDetail(
+                    context = LocalContext.current,
+                    coin = Coin(
+                        name = "Coin 1",
+                        symbol = "Coin",
+                        image = "",
+                        ath = 1000000000.0,
+                        currentPrice = 100000.0,
+                        priceChange24h = 1000.0,
+                        marketCapChangePercentage24h = 1.0,
+                        lastUpdated = "2008-11-01T01:00:00.000Z"
+                    ),
+                    coinDetails = CoinDetails(
+                        coinData = CoinData(
+                            name = "Coin",
+                            description = Description(en = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."),
+                            image = Image(large = ""),
+                            links = Links(homepage = listOf(""))
+                        ),
+                        coinMarketHistory = CoinMarketHistory(
+                            prices = listOf(
+                                listOf(1743779376258.0, 0.0),
+                                listOf(1744382874000.0, 10.0)
+                            )
+                        )
+                    )
+                )
+            }
+        }
     }
 }

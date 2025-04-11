@@ -6,5 +6,4 @@ object Constants {
     const val MARKETS_PATH = "markets"
     const val MARKET_CHART_PATH = "/market_chart"
     const val EUR = "eur"
-    const val DAILY_INTERVAL = "daily"
 }

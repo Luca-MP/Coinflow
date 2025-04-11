@@ -33,6 +33,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -55,7 +56,9 @@ import it.pezzotta.coinflow.R
 import it.pezzotta.coinflow.viewmodel.CoinViewModel
 import it.pezzotta.coinflow.common.CoinVariability
 import it.pezzotta.coinflow.common.ErrorMessage
+import it.pezzotta.coinflow.common.CoinPlaceholder
 import it.pezzotta.coinflow.data.model.Coin
+import it.pezzotta.coinflow.prettyFormat
 import it.pezzotta.coinflow.ui.theme.CoinflowTheme
 
 @AndroidEntryPoint
@@ -67,14 +70,14 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContent {
             CoinflowTheme {
-                CoinsScreen(coinViewModel)
+                MarketScreen(coinViewModel)
             }
         }
     }
 }
 
 @Composable
-fun CoinsScreen(coinViewModel: CoinViewModel) {
+fun MarketScreen(coinViewModel: CoinViewModel) {
     val context = LocalContext.current
     val coinMarketState = coinViewModel.coinMarket.collectAsState(initial = null)
     val result = coinMarketState.value
@@ -151,6 +154,7 @@ fun CryptoItem(context: Context, coin: Coin) {
         ) {
             coin.image?.let {
                 AsyncImage(
+                    placeholder = CoinPlaceholder(R.drawable.app_icon),
                     model = ImageRequest.Builder(context).data(it).crossfade(true).build(),
                     contentDescription = "Coin image",
                     contentScale = ContentScale.Crop,
@@ -175,13 +179,13 @@ fun CryptoItem(context: Context, coin: Coin) {
             ) {
                 coin.currentPrice?.let {
                     Text(
-                        text = "${"%.2f".format(it)} €",
+                        text = "${it.prettyFormat()} €",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         modifier = Modifier.padding(end = 8.dp)
                     )
                 }
-                CoinVariability(coin)
+                CoinVariability(coin, false)
             }
             Icon(
                 imageVector = Icons.Rounded.KeyboardArrowRight,
@@ -192,8 +196,26 @@ fun CryptoItem(context: Context, coin: Coin) {
     }
 }
 
-@Preview(showBackground = true)
+@Preview
 @Composable
-fun GreetingPreview() {
-    CoinflowTheme {}
+fun MarketScreenPreview() {
+    CoinflowTheme {
+        Surface {
+            Box(modifier = Modifier.fillMaxSize()) {
+                CryptoList(
+                    context = LocalContext.current,
+                    coins = listOf(
+                        Coin(
+                            name = "Coin 1",
+                            symbol = "Coin",
+                            image = "",
+                            currentPrice = 100000.0,
+                            priceChange24h = 1000.0,
+                            marketCapChangePercentage24h = 1.0
+                        )
+                    )
+                )
+            }
+        }
+    }
 }

@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import it.pezzotta.coinflow.R
 import it.pezzotta.coinflow.data.model.Coin
@@ -18,7 +19,7 @@ import it.pezzotta.coinflow.viewmodel.CoinViewModel
 
 @Composable
 fun ErrorMessage(
-    coinViewModel: CoinViewModel,
+    coinViewModel: CoinViewModel?,
     isDetailsScreen: Boolean,
     coin: Coin,
     days: Int,
@@ -44,7 +45,7 @@ fun ErrorMessage(
         }
         Button(
             onClick = {
-                if (!isDetailsScreen) coinViewModel.getCoinMarket() else coinViewModel.getCoinDetails(
+                if (!isDetailsScreen) coinViewModel?.getCoinMarket() else coinViewModel?.getCoinDetails(
                     coin,
                     days,
                     precision,
@@ -53,4 +54,16 @@ fun ErrorMessage(
             Text(text = stringResource(R.string.retry))
         }
     }
+}
+
+@Preview
+@Composable
+fun ErrorMessagePreview() {
+    ErrorMessage(
+        null,
+        false,
+        Coin(),
+        7,
+        8,
+    )
 }
