@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">CoinFlow</string>
-    <string name="ops">Ops!\nSomething went wrong.</string>
-    <string name="warning_sign">⚠️\n</string>
+    <string name="ops">Ops!\nSomething went wrong</string>
+    <string name="warning_sign">⚠</string>
     <string name="retry">Retry</string>
     <string name="EURO">Euro</string>
     <string name="ATH">ATH</string>
