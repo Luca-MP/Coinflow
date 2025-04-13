@@ -36,8 +36,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,6 +67,7 @@ import it.pezzotta.coinflow.common.CoinPlaceholder
 import it.pezzotta.coinflow.data.model.Coin
 import it.pezzotta.coinflow.prettyFormat
 import it.pezzotta.coinflow.ui.theme.CoinflowTheme
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -112,7 +120,7 @@ fun MarketScreen(coinViewModel: CoinViewModel) {
 
                 result.isSuccess -> {
                     val coinList = result.getOrNull() ?: emptyList()
-                    CryptoList(context = context, coins = coinList)
+                    CryptoList(context = context, coinViewModel = coinViewModel, coins = coinList)
                 }
 
                 result.isFailure -> {
@@ -127,11 +135,30 @@ fun MarketScreen(coinViewModel: CoinViewModel) {
 }
 
 @Composable
-fun CryptoList(context: Context, coins: List<Coin>) {
-    LazyColumn {
-        items(coins) { coin ->
-            CryptoItem(context, coin)
-            if (coin != coins.last()) HorizontalDivider()
+fun CryptoList(context: Context,  coinViewModel: CoinViewModel?, coins: List<Coin>) {
+    var isRefreshing by remember { mutableStateOf(false) }
+    val state = rememberPullToRefreshState()
+    val coroutineScope = rememberCoroutineScope()
+
+    val onRefresh: () -> Unit = {
+        isRefreshing = true
+        coroutineScope.launch {
+            coinViewModel?.refreshCoinMarket()
+            isRefreshing = false
+        }
+    }
+
+    PullToRefreshBox(
+        state = state,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize(),
+        isRefreshing = isRefreshing
+    ) {
+        LazyColumn {
+            items(coins) { coin ->
+                CryptoItem(context, coin)
+                if (coin != coins.last()) HorizontalDivider()
+            }
         }
     }
 }
@@ -204,6 +231,7 @@ fun MarketScreenPreview() {
             Box(modifier = Modifier.fillMaxSize()) {
                 CryptoList(
                     context = LocalContext.current,
+                    coinViewModel = null,
                     coins = listOf(
                         Coin(
                             name = "Coin 1",

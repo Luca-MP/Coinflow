@@ -18,21 +18,21 @@ fun CoinVariability(coin: Coin, isDetailScreen: Boolean) {
     Row {
         coin.priceChange24h?.let {
             Text(
-                text = if (it > 0) "+${it.prettyFormat() + "€"}" else it.prettyFormat() + "€",
-                color = if (it > 0) GreenChart else RedChart,
+                text = if (it >= 0) "+${it.prettyFormat() + "€"}" else it.prettyFormat() + "€",
+                color = if (it >= 0) GreenChart else RedChart,
             )
         }
         Text("  ")
         coin.marketCapChangePercentage24h?.let {
             Text(
-                text = if (it > 0) "+${it.prettyFormat() + "% "}" else it.prettyFormat() + "% ",
-                color = if (it > 0) GreenChart else RedChart,
+                text = if (it >= 0) "+${it.prettyFormat() + "% "}" else it.prettyFormat() + "% ",
+                color = if (it >= 0) GreenChart else RedChart,
             )
         }
         if (isDetailScreen) coin.priceChange24h?.let {
             Text(
                 stringResource(R.string.today),
-                color = if (it > 0) GreenChart else RedChart
+                color = if (it >= 0) GreenChart else RedChart
             )
         }
     }

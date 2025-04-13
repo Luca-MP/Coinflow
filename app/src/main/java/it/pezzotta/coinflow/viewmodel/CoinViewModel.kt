@@ -34,6 +34,10 @@ class CoinViewModel @Inject constructor(
         }
     }
 
+    suspend fun refreshCoinMarket() {
+        _coinMarket.value = coinRepository.getCoinMarket()
+    }
+
     fun getCoinDetails(coin: Coin, days: Int, precision: Int) {
         viewModelScope.launch {
             val result = coinRepository.getCoinDetails(coin, days, precision)
