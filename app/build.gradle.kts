@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -8,7 +11,6 @@ plugins {
     id("dagger.hilt.android.plugin")
 }
 
-// Allow references to generated code
 kapt {
     correctErrorTypes = true
 }
@@ -27,9 +29,24 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    val certificatePropertiesFile = rootProject.file("certificate.properties")
+    val keystoreProperties = Properties().apply {
+        load(FileInputStream(certificatePropertiesFile))
+    }
+
+    signingConfigs {
+        create("store") {
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("store")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

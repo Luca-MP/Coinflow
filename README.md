@@ -17,6 +17,7 @@ Welcome to **CoinFlow**, a modern and intuitive Android app written in Jetpack C
 - **Retrofit2**: Type-safe REST client to make it easier to consume RESTful web services
 - **Coil**: Easy, lightweight and modern library to load images
 - **Compose Charts**: Animated & flexible practical charts multiplatform library for jetpack compose
+- **Mockito**: Mocking framework to write tests with a clean and simple API.
 
 ## 🏁 **Setup**
 
@@ -37,6 +38,26 @@ Welcome to **CoinFlow**, a modern and intuitive Android app written in Jetpack C
 2. Install project dependencies with Gradle Sync
 
 3. Run the app:
+
+
+## 📱 Generate a signed release APK
+
+In order to create a signed apk enter the following command on the Android Studio Terminal
+```
+./gradlew clean assembleRelease
+```
+The terminal will output the build process, and when it hits 100% build complete you will find the app-release.apk inside the following folder
+```
+app/build/outputs/apk/release
+```
+
+
+## 🧪 Run tests
+
+In order to check code quality you can run tests with the following command
+```
+./gradlew testDebugUnitTest --tests CoinViewModelTest
+```
 
 
 ## 👨🏻‍💻 Author
