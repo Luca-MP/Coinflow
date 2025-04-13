@@ -207,7 +207,7 @@ fun MarketScreenPreview() {
                     coins = listOf(
                         Coin(
                             name = "Coin 1",
-                            symbol = "Coin",
+                            symbol = "C1",
                             image = "",
                             currentPrice = 100000.0,
                             priceChange24h = 1000.0,

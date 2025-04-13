@@ -258,8 +258,8 @@ fun CoinChart(coinDetails: CoinDetails) {
     val maxChartValue: Double? = coinDetails.coinMarketHistory.prices?.let { prices ->
         findMinAndMax(prices).second.let { it + (it * 10) / 100 }
     }
-    val firstChartValue: Double? = coinDetails.coinMarketHistory.prices?.get(1)?.first()
-    val lastChartValue: Double? = coinDetails.coinMarketHistory.prices?.get(1)?.last()
+    val firstChartValue: Double? = coinDetails.coinMarketHistory.prices?.first()?.get(1)
+    val lastChartValue: Double? = coinDetails.coinMarketHistory.prices?.last()?.get(1)
 
     Box(modifier = Modifier.height(400.dp)) {
         LineChart(
@@ -360,17 +360,17 @@ fun CoinDetailPreview() {
                     context = LocalContext.current,
                     coin = Coin(
                         name = "Coin 1",
-                        symbol = "Coin",
+                        symbol = "C1",
                         image = "",
                         ath = 1000000000.0,
                         currentPrice = 100000.0,
                         priceChange24h = 1000.0,
                         marketCapChangePercentage24h = 1.0,
-                        lastUpdated = "2008-11-01T01:00:00.000Z"
+                        lastUpdated = "2008-10-31T23:00:00.000Z"
                     ),
                     coinDetails = CoinDetails(
                         coinData = CoinData(
-                            name = "Coin",
+                            name = "Coin 1",
                             description = Description(en = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."),
                             image = Image(large = ""),
                             links = Links(homepage = listOf(""))
