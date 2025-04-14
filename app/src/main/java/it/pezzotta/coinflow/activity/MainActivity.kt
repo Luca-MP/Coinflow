@@ -43,8 +43,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,9 +63,9 @@ import it.pezzotta.coinflow.common.CoinVariability
 import it.pezzotta.coinflow.common.ErrorMessage
 import it.pezzotta.coinflow.common.CoinPlaceholder
 import it.pezzotta.coinflow.data.model.Coin
+import it.pezzotta.coinflow.data.repository.CoinMarketState
 import it.pezzotta.coinflow.prettyFormat
 import it.pezzotta.coinflow.ui.theme.CoinflowTheme
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -87,7 +85,7 @@ class MainActivity : AppCompatActivity() {
 @Composable
 fun MarketScreen(coinViewModel: CoinViewModel) {
     val context = LocalContext.current
-    val coinMarketState = coinViewModel.coinMarket.collectAsState(initial = null)
+    val coinMarketState = coinViewModel.coinMarket.collectAsState(CoinMarketState.Loading)
     val result = coinMarketState.value
 
     Scaffold(
@@ -113,19 +111,19 @@ fun MarketScreen(coinViewModel: CoinViewModel) {
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            when {
-                result == null -> {
+            when (result) {
+                is CoinMarketState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
 
-                result.isSuccess -> {
-                    val coinList = result.getOrNull() ?: emptyList()
+                is CoinMarketState.Success -> {
+                    val coinList = result.coins
                     CryptoList(context = context, coinViewModel = coinViewModel, coins = coinList)
                 }
 
-                result.isFailure -> {
+                is CoinMarketState.Error -> {
                     Toast.makeText(
-                        context, "${result.exceptionOrNull()?.message}", Toast.LENGTH_SHORT
+                        context, "${result.throwable.message}", Toast.LENGTH_SHORT
                     ).show()
                     ErrorMessage(coinViewModel, false, Coin(), 7, 8)
                 }
@@ -136,16 +134,11 @@ fun MarketScreen(coinViewModel: CoinViewModel) {
 
 @Composable
 fun CryptoList(context: Context,  coinViewModel: CoinViewModel?, coins: List<Coin>) {
-    var isRefreshing by remember { mutableStateOf(false) }
+    val isRefreshing by coinViewModel?.isRefreshing?.collectAsState() ?: remember { mutableStateOf(false) }
     val state = rememberPullToRefreshState()
-    val coroutineScope = rememberCoroutineScope()
 
     val onRefresh: () -> Unit = {
-        isRefreshing = true
-        coroutineScope.launch {
-            coinViewModel?.refreshCoinMarket()
-            isRefreshing = false
-        }
+        coinViewModel?.getCoinMarket(isRefreshing = true)
     }
 
     PullToRefreshBox(

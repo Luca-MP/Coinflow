@@ -8,31 +8,30 @@ import it.pezzotta.coinflow.data.model.CoinMarketHistory
 import it.pezzotta.coinflow.data.remote.CoinService
 
 class CoinRepository(private val coinService: CoinService) {
-    suspend fun getCoinMarket(): Result<List<Coin>> {
+    suspend fun getCoinMarket(): CoinMarketState {
         return try {
             val response = coinService.getCoinMarket(
                 url = Constants.MARKETS_PATH,
                 key = Constants.API_KEY,
                 vsCurrency = Constants.EUR,
-                perPage = 10,
+                perPage = 10
             )
             if (response.isSuccessful) {
                 response.body()?.let {
-                    Result.success(it)
-                } ?: Result.failure(Exception("Empty body"))
+                    CoinMarketState.Success(it)
+                } ?: CoinMarketState.Error(Exception("Empty body"))
             } else {
-                Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
+                CoinMarketState.Error(Exception("Error ${response.code()}: ${response.message()}"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            CoinMarketState.Error(e)
         }
     }
 
     private suspend fun getCoinData(coin: Coin): Result<CoinData> {
         return try {
             val response = coinService.getCoinData(
-                url = coin.id!!,
-                key = Constants.API_KEY,
+                url = coin.id!!, key = Constants.API_KEY
             )
             if (response.isSuccessful) {
                 response.body()?.let {
@@ -93,4 +92,10 @@ class CoinRepository(private val coinService: CoinService) {
             Result.failure(e)
         }
     }
+}
+
+sealed class CoinMarketState {
+    object Loading : CoinMarketState()
+    data class Success(val coins: List<Coin>) : CoinMarketState()
+    data class Error(val throwable: Throwable) : CoinMarketState()
 }

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.pezzotta.coinflow.data.model.Coin
 import it.pezzotta.coinflow.data.model.CoinDetails
+import it.pezzotta.coinflow.data.repository.CoinMarketState
 import it.pezzotta.coinflow.data.repository.CoinRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,25 +18,28 @@ class CoinViewModel @Inject constructor(
 ) : ViewModel() {
 
     init {
-        getCoinMarket()
+        getCoinMarket(isRefreshing = false)
     }
 
-    private val _coinMarket = MutableStateFlow<Result<List<Coin>>?>(null)
-    val coinMarket: StateFlow<Result<List<Coin>>?> = _coinMarket
+    private val _coinMarket = MutableStateFlow<CoinMarketState>(CoinMarketState.Loading)
+    val coinMarket: StateFlow<CoinMarketState> = _coinMarket
 
     private val _coinDetails = MutableStateFlow<Result<CoinDetails>?>(null)
     val coinDetails: StateFlow<Result<CoinDetails>?> = _coinDetails
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing
 
-    fun getCoinMarket() {
+    fun getCoinMarket(isRefreshing: Boolean) {
         viewModelScope.launch {
+            if (isRefreshing) {
+                _coinMarket.value = CoinMarketState.Loading
+                _isRefreshing.value = true
+            }
             val result = coinRepository.getCoinMarket()
             _coinMarket.value = result
+            _isRefreshing.value = false
         }
-    }
-
-    suspend fun refreshCoinMarket() {
-        _coinMarket.value = coinRepository.getCoinMarket()
     }
 
     fun getCoinDetails(coin: Coin, days: Int, precision: Int) {

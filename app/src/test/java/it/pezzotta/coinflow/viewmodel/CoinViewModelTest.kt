@@ -2,6 +2,7 @@ import it.pezzotta.coinflow.data.model.Coin
 import it.pezzotta.coinflow.data.model.CoinData
 import it.pezzotta.coinflow.data.model.CoinDetails
 import it.pezzotta.coinflow.data.model.CoinMarketHistory
+import it.pezzotta.coinflow.data.repository.CoinMarketState
 import it.pezzotta.coinflow.data.repository.CoinRepository
 import it.pezzotta.coinflow.viewmodel.CoinViewModel
 import kotlinx.coroutines.Dispatchers
@@ -48,23 +49,7 @@ class CoinViewModelTest {
             ?: throw AssertionError("Resource not found: market_response.json")
         val marketJson = market.bufferedReader().use { it.readText() }
         val marketData = json.decodeFromString<List<Coin>>(marketJson)
-        val marketResult = Result.success(marketData)
-
-        doReturn(marketResult).`when`(coinRepository).getCoinMarket()
-        coinViewModel = CoinViewModel(coinRepository)
-
-        advanceUntilIdle()
-        val actualResult = coinViewModel.coinMarket.value?.getOrNull()
-
-        assertEquals(marketData, actualResult)
-
-        verify(coinRepository).getCoinMarket()
-    }
-
-    @Test
-    fun `getCoinMarket should update coinMarket state with failure result`() = testScope.runTest {
-        val exception = Exception("Error 429:")
-        val marketResult = Result.failure<List<Coin>>(exception)
+        val marketResult = CoinMarketState.Success(marketData)
 
         doReturn(marketResult).`when`(coinRepository).getCoinMarket()
         coinViewModel = CoinViewModel(coinRepository)
@@ -72,8 +57,24 @@ class CoinViewModelTest {
         advanceUntilIdle()
         val actualResult = coinViewModel.coinMarket.value
 
-        assertTrue(actualResult?.isFailure == true)
-        assertEquals("Error 429:", actualResult?.exceptionOrNull()?.message)
+        assertEquals(marketResult, actualResult)
+
+        verify(coinRepository).getCoinMarket()
+    }
+
+    @Test
+    fun `getCoinMarket should update coinMarket state with failure result`() = testScope.runTest {
+        val exception = Exception("Error 429:")
+        val marketResult = CoinMarketState.Error(exception)
+
+        doReturn(marketResult).`when`(coinRepository).getCoinMarket()
+        coinViewModel = CoinViewModel(coinRepository)
+
+        advanceUntilIdle()
+        val actualResult = coinViewModel.coinMarket.value
+
+        assertTrue(actualResult is CoinMarketState.Error)
+        assertEquals(marketResult, actualResult)
 
         verify(coinRepository).getCoinMarket()
     }

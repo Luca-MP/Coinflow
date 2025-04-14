@@ -6,35 +6,26 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import it.pezzotta.coinflow.R
 import it.pezzotta.coinflow.data.model.Coin
 import it.pezzotta.coinflow.viewmodel.CoinViewModel
 
 @Composable
 fun ErrorMessage(
-    coinViewModel: CoinViewModel?,
-    isDetailsScreen: Boolean,
-    coin: Coin,
-    days: Int,
-    precision: Int
+    coinViewModel: CoinViewModel?, isDetailsScreen: Boolean, coin: Coin, days: Int, precision: Int
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -51,15 +42,14 @@ fun ErrorMessage(
             Text(
                 text = stringResource(R.string.ops),
                 style = MaterialTheme.typography.titleLarge,
-                textAlign = TextAlign.Center,
+                textAlign = TextAlign.Center
             )
             Button(
-                modifier = Modifier.fillMaxWidth(fraction = 0.5f).padding(top = 24.dp),
-                onClick = {
-                    if (!isDetailsScreen) coinViewModel?.getCoinMarket() else coinViewModel?.getCoinDetails(
-                        coin,
-                        days,
-                        precision,
+                modifier = Modifier
+                    .fillMaxWidth(fraction = 0.5f)
+                    .padding(top = 24.dp), onClick = {
+                    if (!isDetailsScreen) coinViewModel?.getCoinMarket(isRefreshing = true) else coinViewModel?.getCoinDetails(
+                        coin, days, precision
                     )
                 }) {
                 Text(text = stringResource(R.string.retry))
@@ -72,10 +62,6 @@ fun ErrorMessage(
 @Composable
 fun ErrorMessagePreview() {
     ErrorMessage(
-        null,
-        false,
-        Coin(),
-        7,
-        8,
+        null, false, Coin(), 7, 8
     )
 }
