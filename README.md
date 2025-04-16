@@ -59,10 +59,17 @@ app/build/outputs/apk/release
 
 ## 🧪 Run tests
 
-In order to check code quality you can run tests with the following command
-```
-./gradlew testDebugUnitTest --tests CoinViewModelTest
-```
+In order to check code quality you can run the following commands for:
+
+- logic tests on the viewmodel
+   ```
+   ./gradlew testDebugUnitTest --tests CoinViewModelTest
+   ```
+
+- UI tests (restricted functionality due to API requests limitations)
+   ```
+   ./gradlew connectedAndroidTest
+   ```
 
 
 ## 👨🏻‍💻 Author

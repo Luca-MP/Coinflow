@@ -64,6 +64,7 @@ import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -265,7 +266,8 @@ fun CoinChart(coinDetails: CoinDetails) {
         LineChart(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 16.dp),
+                .padding(top = 16.dp)
+                .testTag("coin_detail_${ coinDetails.coinData.id}"),
             labelProperties = LabelProperties(
                 enabled = true,
                 textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground),
@@ -321,7 +323,8 @@ fun ExpandableDescription(coin: Coin, description: String) {
                 color = MaterialTheme.colorScheme.primaryContainer,
                 shape = RoundedCornerShape(16.dp)
             )
-            .noRippleClickable { isExpanded.value = !isExpanded.value }) {
+            .noRippleClickable { isExpanded.value = !isExpanded.value }
+            .testTag("coin_detail_description")) {
         Row(
             modifier = Modifier
                 .fillMaxSize()

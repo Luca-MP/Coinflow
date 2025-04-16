@@ -90,7 +90,7 @@ fun MarketScreen(coinViewModel: CoinViewModel) {
     val result = coinMarketState.value
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().testTag("swipe_refresh"),
         topBar = {
             CenterAlignedTopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
