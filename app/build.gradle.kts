@@ -25,8 +25,7 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "it.pezzotta.coinflow.application.ApplicationTest"
     }
 
     val certificatePropertiesFile = rootProject.file("certificate.properties")
@@ -98,4 +97,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(libs.hilt.android.testing)
+    androidTestImplementation(libs.mockito.android)
+    kaptAndroidTest(libs.hilt.compiler)
 }

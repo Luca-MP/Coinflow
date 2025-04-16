@@ -49,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -113,7 +114,11 @@ fun MarketScreen(coinViewModel: CoinViewModel) {
         ) {
             when (result) {
                 is CoinMarketState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .testTag("loading_indicator")
+                    )
                 }
 
                 is CoinMarketState.Success -> {
@@ -160,6 +165,7 @@ fun CryptoList(context: Context,  coinViewModel: CoinViewModel?, coins: List<Coi
 fun CryptoItem(context: Context, coin: Coin) {
     Row(
         modifier = Modifier
+            .testTag("coin_item_${coin.id}")
             .height(88.dp)
             .fillMaxWidth()
             .clickable {

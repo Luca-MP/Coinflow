@@ -6,8 +6,9 @@ import it.pezzotta.coinflow.data.model.CoinData
 import it.pezzotta.coinflow.data.model.CoinDetails
 import it.pezzotta.coinflow.data.model.CoinMarketHistory
 import it.pezzotta.coinflow.data.remote.CoinService
+import javax.inject.Inject
 
-class CoinRepository(private val coinService: CoinService) {
+class CoinRepository @Inject constructor(private val coinService: CoinService) {
     suspend fun getCoinMarket(): CoinMarketState {
         return try {
             val response = coinService.getCoinMarket(

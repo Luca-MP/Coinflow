@@ -52,18 +52,19 @@ object DIModule {
 
     }.build()
 
+    @Singleton
     @Provides
-    fun provideBWWKService(@CoinRetrofit retrofit: Retrofit): CoinService =
+    fun provideCoinService(@CoinRetrofit retrofit: Retrofit): CoinService =
         retrofit.create(CoinService::class.java)
 
     @Singleton
     @Provides
-    fun provideBWWKRepository(coinService: CoinService) = CoinRepository(coinService)
+    fun provideCoinRepository(coinService: CoinService) = CoinRepository(coinService)
 
     @CoinRetrofit
     @Singleton
     @Provides
-    fun provideBWWKRetrofit(@CoinOkHttpClient httpClient: OkHttpClient, json: Json): Retrofit =
+    fun provideCoinRetrofit(@CoinOkHttpClient httpClient: OkHttpClient, json: Json): Retrofit =
         Retrofit.Builder()
             .baseUrl(Constants.BASE_URL)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
