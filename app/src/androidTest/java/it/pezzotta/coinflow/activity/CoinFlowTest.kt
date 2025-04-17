@@ -88,7 +88,8 @@ class CoinFlowTest {
 
         // wait for the chart inside detail screen to load
         composeTestRule.waitUntil(5000) {
-            composeTestRule.onAllNodesWithTag("coin_detail_bitcoin").fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.onAllNodesWithTag("coin_detail_bitcoin").fetchSemanticsNodes()
+                .isNotEmpty()
         }
 
         // assert that the detail title is visible

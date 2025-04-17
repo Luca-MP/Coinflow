@@ -12,6 +12,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,6 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import it.pezzotta.coinflow.R
 import it.pezzotta.coinflow.data.model.Coin
+import it.pezzotta.coinflow.ui.theme.CoinflowTheme
 import it.pezzotta.coinflow.viewmodel.CoinViewModel
 
 @Composable
@@ -63,7 +65,11 @@ fun ErrorMessage(
 @Preview
 @Composable
 fun ErrorMessagePreview() {
-    ErrorMessage(
-        null, false, Coin(), 7, 8
-    )
+    CoinflowTheme {
+        Surface {
+            ErrorMessage(
+                null, false, Coin(), 7, 8
+            )
+        }
+    }
 }

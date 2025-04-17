@@ -23,7 +23,7 @@ fun CoinVariability(coin: Coin, isDetailScreen: Boolean) {
             )
         }
         Text("  ")
-        coin.marketCapChangePercentage24h?.let {
+        coin.priceChangePercentage24h?.let {
             Text(
                 text = if (it >= 0) "+${it.prettyFormat() + "% "}" else it.prettyFormat() + "% ",
                 color = if (it >= 0) GreenChart else RedChart,
@@ -46,7 +46,7 @@ fun CoinDetailPreview() {
             CoinVariability(
                 coin = Coin(
                     priceChange24h = 1000.0,
-                    marketCapChangePercentage24h = 1.0,
+                    priceChangePercentage24h = 1.0,
                 ),
                 true,
             )

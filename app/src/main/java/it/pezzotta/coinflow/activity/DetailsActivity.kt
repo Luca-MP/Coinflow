@@ -262,53 +262,66 @@ fun CoinChart(coinDetails: CoinDetails) {
     val firstChartValue: Double? = coinDetails.coinMarketHistory.prices?.first()?.get(1)
     val lastChartValue: Double? = coinDetails.coinMarketHistory.prices?.last()?.get(1)
 
-    Box(modifier = Modifier.height(400.dp)) {
-        LineChart(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 16.dp)
-                .testTag("coin_detail_${ coinDetails.coinData.id}"),
-            labelProperties = LabelProperties(
-                enabled = true,
-                textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground),
-                labels = getNumberOfDays(
-                    coinDetails.coinMarketHistory.prices?.get(0)?.get(0)?.toLong()!!
-                ),
-            ),
-            labelHelperProperties = LabelHelperProperties(textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground)),
-            gridProperties = GridProperties(
-                yAxisProperties = GridProperties.AxisProperties(
-                    lineCount = 0
-                )
-            ),
-            indicatorProperties = HorizontalIndicatorProperties(
-                contentBuilder = { it.format(2) },
-                textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground)
-            ),
-            popupProperties = PopupProperties(
-                containerColor = GreyChart, contentBuilder = { it.format(2) }),
-            data = remember {
-                listOf(
-                    Line(
-                        label = "${coinDetails.coinData.name!!}/Euro",
-                        values = coinDetails.coinMarketHistory.prices.map { it[1] },
-                        color = if (firstChartValue!! > lastChartValue!!) SolidColor(RedChart) else SolidColor(
-                            GreenChart
-                        ),
-                        firstGradientFillColor = if (firstChartValue > lastChartValue) RedChart.copy(
-                            alpha = .5f
-                        ) else GreenChart.copy(alpha = .5f),
-                        secondGradientFillColor = Color.Transparent,
-                        strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
-                        gradientAnimationDelay = 1000,
-                        drawStyle = DrawStyle.Stroke(width = 2.dp),
-                    )
-                )
-            },
-            minValue = minChartValue!!,
-            maxValue = maxChartValue!!,
-            animationMode = AnimationMode.Together(delayBuilder = { it * 500L }),
-        )
+    Box(modifier = Modifier.height(400.dp).testTag("coin_detail_${coinDetails.coinData.id}")) {
+        minChartValue?.let { minChartValue ->
+            maxChartValue?.let { maxChartValue ->
+                firstChartValue?.let { firstChartValue ->
+                    lastChartValue?.let { lastChartValue ->
+                        LineChart(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(top = 16.dp),
+                            labelProperties = LabelProperties(
+                                enabled = true,
+                                textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground),
+                                labels = getNumberOfDays(
+                                    coinDetails.coinMarketHistory.prices.first().first().toLong()
+                                ),
+                            ),
+                            labelHelperProperties = LabelHelperProperties(
+                                textStyle = TextStyle(
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                            ),
+                            gridProperties = GridProperties(
+                                yAxisProperties = GridProperties.AxisProperties(
+                                    lineCount = 0
+                                )
+                            ),
+                            indicatorProperties = HorizontalIndicatorProperties(
+                                contentBuilder = { it.format(2) },
+                                textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground)
+                            ),
+                            popupProperties = PopupProperties(
+                                containerColor = GreyChart, contentBuilder = { it.prettyFormat().format(2) }),
+                            data = remember {
+                                listOf(
+                                    Line(
+                                        label = "${coinDetails.coinData.name}/Euro",
+                                        values = coinDetails.coinMarketHistory.prices.map { it[1] },
+                                        color = if (firstChartValue > lastChartValue) SolidColor(
+                                            RedChart
+                                        ) else SolidColor(
+                                            GreenChart
+                                        ),
+                                        firstGradientFillColor = if (firstChartValue > lastChartValue) RedChart.copy(
+                                            alpha = .5f
+                                        ) else GreenChart.copy(alpha = .5f),
+                                        secondGradientFillColor = Color.Transparent,
+                                        strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
+                                        gradientAnimationDelay = 1000,
+                                        drawStyle = DrawStyle.Stroke(width = 2.dp),
+                                    )
+                                )
+                            },
+                            minValue = minChartValue,
+                            maxValue = maxChartValue,
+                            animationMode = AnimationMode.Together(delayBuilder = { it * 500L }),
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -332,10 +345,12 @@ fun ExpandableDescription(coin: Coin, description: String) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                stringResource(R.string.what_is, coin.name!!),
-                style = MaterialTheme.typography.titleLarge
-            )
+            coin.name?.let { coinName ->
+                Text(
+                    stringResource(R.string.what_is, coinName),
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
             Icon(
                 imageVector = if (isExpanded.value) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
                 contentDescription = "Details"
@@ -360,28 +375,25 @@ fun CoinDetailPreview() {
         Surface {
             Box(modifier = Modifier.fillMaxSize()) {
                 CoinDetail(
-                    context = LocalContext.current,
-                    coin = Coin(
+                    context = LocalContext.current, coin = Coin(
                         name = "Coin 1",
                         symbol = "C1",
                         image = "",
                         ath = 1000000000.0,
                         currentPrice = 100000.0,
                         priceChange24h = 1000.0,
-                        marketCapChangePercentage24h = 1.0,
+                        priceChangePercentage24h = 1.0,
                         lastUpdated = "2008-10-31T23:00:00.000Z"
-                    ),
-                    coinDetails = CoinDetails(
+                    ), coinDetails = CoinDetails(
                         coinData = CoinData(
                             name = "Coin 1",
                             description = Description(en = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."),
                             image = Image(large = ""),
                             links = Links(homepage = listOf(""))
-                        ),
-                        coinMarketHistory = CoinMarketHistory(
+                        ), coinMarketHistory = CoinMarketHistory(
                             prices = listOf(
-                                listOf(1743779376258.0, 0.0),
-                                listOf(1744382874000.0, 10.0)
+                                listOf(1744375620000.0, 90000.00),
+                                listOf(1743779376258.0, 100000.00),
                             )
                         )
                     )

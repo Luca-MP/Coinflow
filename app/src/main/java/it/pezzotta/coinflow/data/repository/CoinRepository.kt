@@ -31,15 +31,17 @@ class CoinRepository @Inject constructor(private val coinService: CoinService) {
 
     private suspend fun getCoinData(coin: Coin): Result<CoinData> {
         return try {
-            val response = coinService.getCoinData(
-                url = coin.id!!, key = Constants.API_KEY
-            )
-            if (response.isSuccessful) {
+            val response = coin.id?.let {
+                coinService.getCoinData(
+                    url = it, key = Constants.API_KEY
+                )
+            }
+            if (response?.isSuccessful == true) {
                 response.body()?.let {
                     Result.success(it)
                 } ?: Result.failure(Exception("Empty body"))
             } else {
-                Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
+                Result.failure(Exception("Error ${response?.code()}: ${response?.message()}"))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -51,7 +53,7 @@ class CoinRepository @Inject constructor(private val coinService: CoinService) {
     ): Result<CoinMarketHistory> {
         return try {
             val response = coinService.getCoinMarketHistory(
-                url = coin.id!! + Constants.MARKET_CHART_PATH,
+                url = coin.id + Constants.MARKET_CHART_PATH,
                 key = Constants.API_KEY,
                 vsCurrency = Constants.EUR,
                 days = days,

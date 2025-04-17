@@ -238,7 +238,7 @@ fun MarketScreenPreview() {
                             image = "",
                             currentPrice = 100000.0,
                             priceChange24h = 1000.0,
-                            marketCapChangePercentage24h = 1.0
+                            priceChangePercentage24h = 1.0
                         )
                     )
                 )
