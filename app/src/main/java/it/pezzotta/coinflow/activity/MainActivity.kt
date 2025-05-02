@@ -39,10 +39,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import dagger.hilt.android.AndroidEntryPoint
+import it.pezzotta.coinflow.Constants
 import it.pezzotta.coinflow.R
 import it.pezzotta.coinflow.viewmodel.CoinViewModel
 import it.pezzotta.coinflow.common.CoinVariability
@@ -86,11 +83,12 @@ class MainActivity : AppCompatActivity() {
 @Composable
 fun MarketScreen(coinViewModel: CoinViewModel) {
     val context = LocalContext.current
-    val coinMarketState = coinViewModel.coinMarket.collectAsState(CoinMarketState.Loading)
-    val result = coinMarketState.value
+    val coinMarketState = coinViewModel.coinMarket
 
     Scaffold(
-        modifier = Modifier.fillMaxSize().testTag("swipe_refresh"),
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("swipe_refresh"),
         topBar = {
             CenterAlignedTopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -112,7 +110,7 @@ fun MarketScreen(coinViewModel: CoinViewModel) {
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            when (result) {
+            when (coinMarketState) {
                 is CoinMarketState.Loading -> {
                     CircularProgressIndicator(
                         modifier = Modifier
@@ -122,15 +120,22 @@ fun MarketScreen(coinViewModel: CoinViewModel) {
                 }
 
                 is CoinMarketState.Success -> {
-                    val coinList = result.coins
-                    CryptoList(context = context, coinViewModel = coinViewModel, coins = coinList)
+                    val coinList = coinMarketState.coins
+                    val isRefreshing = coinViewModel.isRefreshing
+                    val onRefresh = { coinViewModel.getCoinMarket(refresh = true) }
+                    CryptoList(
+                        context = context,
+                        coins = coinList,
+                        isRefreshing = isRefreshing,
+                        onRefresh = onRefresh
+                    )
                 }
 
                 is CoinMarketState.Error -> {
                     Toast.makeText(
-                        context, "${result.throwable.message}", Toast.LENGTH_SHORT
+                        context, "${coinMarketState.throwable.message}", Toast.LENGTH_SHORT
                     ).show()
-                    ErrorMessage(coinViewModel, false, Coin(), 7, 8)
+                    ErrorMessage(coinViewModel, false, Coin(), Constants.DAYS, Constants.PRECISION)
                 }
             }
         }
@@ -138,19 +143,12 @@ fun MarketScreen(coinViewModel: CoinViewModel) {
 }
 
 @Composable
-fun CryptoList(context: Context,  coinViewModel: CoinViewModel?, coins: List<Coin>) {
-    val isRefreshing by coinViewModel?.isRefreshing?.collectAsState() ?: remember { mutableStateOf(false) }
-    val state = rememberPullToRefreshState()
-
-    val onRefresh: () -> Unit = {
-        coinViewModel?.getCoinMarket(isRefreshing = true)
-    }
-
+fun CryptoList(context: Context, coins: List<Coin>, isRefreshing: Boolean, onRefresh: () -> Unit) {
     PullToRefreshBox(
-        state = state,
-        onRefresh = onRefresh,
         modifier = Modifier.fillMaxSize(),
-        isRefreshing = isRefreshing
+        state = rememberPullToRefreshState(),
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh
     ) {
         LazyColumn {
             items(coins) { coin ->
@@ -230,7 +228,6 @@ fun MarketScreenPreview() {
             Box(modifier = Modifier.fillMaxSize()) {
                 CryptoList(
                     context = LocalContext.current,
-                    coinViewModel = null,
                     coins = listOf(
                         Coin(
                             name = "Coin 1",
@@ -240,7 +237,9 @@ fun MarketScreenPreview() {
                             priceChange24h = 1000.0,
                             priceChangePercentage24h = 1.0
                         )
-                    )
+                    ),
+                    isRefreshing = false,
+                    onRefresh = {},
                 )
             }
         }

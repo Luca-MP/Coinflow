@@ -36,8 +36,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -78,6 +76,7 @@ import ir.ehsannarmani.compose_charts.models.LabelHelperProperties
 import ir.ehsannarmani.compose_charts.models.LabelProperties
 import ir.ehsannarmani.compose_charts.models.Line
 import ir.ehsannarmani.compose_charts.models.PopupProperties
+import it.pezzotta.coinflow.Constants
 import it.pezzotta.coinflow.R
 import it.pezzotta.coinflow.common.CoinVariability
 import it.pezzotta.coinflow.common.ErrorMessage
@@ -154,10 +153,9 @@ class DetailsActivity : AppCompatActivity() {
 @Composable
 fun CoinDetailScreen(innerPadding: PaddingValues, coinViewModel: CoinViewModel, coin: Coin) {
     val context = LocalContext.current
-    val coinDetails by coinViewModel.coinDetails.collectAsState(initial = null)
-    val result = coinDetails
+    val coinDetails = coinViewModel.coinDetails
 
-    LaunchedEffect(coin) { coinViewModel.getCoinDetails(coin, 7, 8) }
+    LaunchedEffect(coin) { coinViewModel.getCoinDetails(coin, Constants.DAYS, Constants.PRECISION) }
 
     Box(
         modifier = Modifier
@@ -165,19 +163,19 @@ fun CoinDetailScreen(innerPadding: PaddingValues, coinViewModel: CoinViewModel, 
             .fillMaxSize()
     ) {
         when {
-            result == null -> {
+            coinDetails == null -> {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
 
-            result.isSuccess -> {
-                result.getOrNull()?.let { CoinDetail(context, coin = coin, coinDetails = it) }
+            coinDetails.isSuccess -> {
+                coinDetails.getOrNull()?.let { CoinDetail(context, coin = coin, coinDetails = it) }
             }
 
-            result.isFailure -> {
+            coinDetails.isFailure -> {
                 Toast.makeText(
-                    context, "${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG
+                    context, "${coinDetails.exceptionOrNull()?.message}", Toast.LENGTH_LONG
                 ).show()
-                ErrorMessage(coinViewModel, true, coin, 7, 8)
+                ErrorMessage(coinViewModel, true, coin, Constants.DAYS, Constants.PRECISION)
             }
         }
     }

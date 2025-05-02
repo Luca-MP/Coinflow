@@ -55,7 +55,7 @@ class CoinViewModelTest {
         coinViewModel = CoinViewModel(coinRepository)
 
         advanceUntilIdle()
-        val actualResult = coinViewModel.coinMarket.value
+        val actualResult = coinViewModel.coinMarket
 
         assertEquals(marketResult, actualResult)
 
@@ -71,7 +71,7 @@ class CoinViewModelTest {
         coinViewModel = CoinViewModel(coinRepository)
 
         advanceUntilIdle()
-        val actualResult = coinViewModel.coinMarket.value
+        val actualResult = coinViewModel.coinMarket
 
         assertTrue(actualResult is CoinMarketState.Error)
         assertEquals(marketResult, actualResult)
@@ -105,7 +105,7 @@ class CoinViewModelTest {
         coinViewModel.getCoinDetails(marketData.first(), days, precision)
 
         advanceUntilIdle()
-        val actualResult = coinViewModel.coinDetails.value?.getOrNull()
+        val actualResult = coinViewModel.coinDetails?.getOrNull()
 
         assertEquals(coinDetailsResult.getOrNull(), actualResult)
 
@@ -124,7 +124,7 @@ class CoinViewModelTest {
         coinViewModel.getCoinDetails(Coin(), days, precision)
 
         advanceUntilIdle()
-        val actualResult = coinViewModel.coinDetails.value
+        val actualResult = coinViewModel.coinDetails
 
         assertTrue(actualResult?.isFailure == true)
         assertEquals("Error 429:", actualResult?.exceptionOrNull()?.message)

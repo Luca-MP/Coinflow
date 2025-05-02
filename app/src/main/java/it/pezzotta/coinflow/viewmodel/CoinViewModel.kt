@@ -1,5 +1,8 @@
 package it.pezzotta.coinflow.viewmodel
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -7,8 +10,6 @@ import it.pezzotta.coinflow.data.model.Coin
 import it.pezzotta.coinflow.data.model.CoinDetails
 import it.pezzotta.coinflow.data.repository.CoinMarketState
 import it.pezzotta.coinflow.data.repository.CoinRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,34 +19,34 @@ class CoinViewModel @Inject constructor(
 ) : ViewModel() {
 
     init {
-        getCoinMarket(isRefreshing = false)
+        getCoinMarket(refresh = false)
     }
 
-    private val _coinMarket = MutableStateFlow<CoinMarketState>(CoinMarketState.Loading)
-    val coinMarket: StateFlow<CoinMarketState> = _coinMarket
+    var coinMarket by mutableStateOf<CoinMarketState>(CoinMarketState.Loading)
+        private set
 
-    private val _coinDetails = MutableStateFlow<Result<CoinDetails>?>(null)
-    val coinDetails: StateFlow<Result<CoinDetails>?> = _coinDetails
+    var coinDetails by mutableStateOf<Result<CoinDetails>?>(null)
+        private set
 
-    private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing: StateFlow<Boolean> = _isRefreshing
+    var isRefreshing by mutableStateOf<Boolean>(false)
+        private set
 
-    fun getCoinMarket(isRefreshing: Boolean) {
+    fun getCoinMarket(refresh: Boolean) {
         viewModelScope.launch {
-            if (isRefreshing) {
-                _coinMarket.value = CoinMarketState.Loading
-                _isRefreshing.value = true
+            if (refresh) {
+                coinMarket = CoinMarketState.Loading
+                isRefreshing = true
             }
             val result = coinRepository.getCoinMarket()
-            _coinMarket.value = result
-            _isRefreshing.value = false
+            coinMarket = result
+            isRefreshing = false
         }
     }
 
     fun getCoinDetails(coin: Coin, days: Int, precision: Int) {
         viewModelScope.launch {
             val result = coinRepository.getCoinDetails(coin, days, precision)
-            _coinDetails.value = result
+            coinDetails = result
         }
     }
 }

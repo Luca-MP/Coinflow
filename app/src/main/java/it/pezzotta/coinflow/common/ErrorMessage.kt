@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import it.pezzotta.coinflow.Constants
 import it.pezzotta.coinflow.R
 import it.pezzotta.coinflow.data.model.Coin
 import it.pezzotta.coinflow.ui.theme.CoinflowTheme
@@ -52,7 +53,7 @@ fun ErrorMessage(
                     .fillMaxWidth(fraction = 0.5f)
                     .padding(top = 24.dp)
                     .testTag("retry_button"), onClick = {
-                    if (!isDetailsScreen) coinViewModel?.getCoinMarket(isRefreshing = true) else coinViewModel?.getCoinDetails(
+                    if (!isDetailsScreen) coinViewModel?.getCoinMarket(refresh = true) else coinViewModel?.getCoinDetails(
                         coin, days, precision
                     )
                 }) {
@@ -68,7 +69,7 @@ fun ErrorMessagePreview() {
     CoinflowTheme {
         Surface {
             ErrorMessage(
-                null, false, Coin(), 7, 8
+                null, false, Coin(), Constants.DAYS, Constants.PRECISION
             )
         }
     }

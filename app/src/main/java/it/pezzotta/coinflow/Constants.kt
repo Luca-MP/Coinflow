@@ -6,4 +6,6 @@ object Constants {
     const val MARKETS_PATH = "markets"
     const val MARKET_CHART_PATH = "/market_chart"
     const val EUR = "eur"
+    const val DAYS = 7
+    const val PRECISION = 8
 }

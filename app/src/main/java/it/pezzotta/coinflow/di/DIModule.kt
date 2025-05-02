@@ -52,15 +52,6 @@ object DIModule {
 
     }.build()
 
-    @Singleton
-    @Provides
-    fun provideCoinService(@CoinRetrofit retrofit: Retrofit): CoinService =
-        retrofit.create(CoinService::class.java)
-
-    @Singleton
-    @Provides
-    fun provideCoinRepository(coinService: CoinService) = CoinRepository(coinService)
-
     @CoinRetrofit
     @Singleton
     @Provides
@@ -70,6 +61,15 @@ object DIModule {
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .client(httpClient)
             .build()
+
+    @Singleton
+    @Provides
+    fun provideCoinService(@CoinRetrofit retrofit: Retrofit): CoinService =
+        retrofit.create(CoinService::class.java)
+
+    @Singleton
+    @Provides
+    fun provideCoinRepository(coinService: CoinService) = CoinRepository(coinService)
 
     @Qualifier
     @Retention(AnnotationRetention.BINARY)
