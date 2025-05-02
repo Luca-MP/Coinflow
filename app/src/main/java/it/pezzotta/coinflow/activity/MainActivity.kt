@@ -39,6 +39,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,8 +62,9 @@ import it.pezzotta.coinflow.common.CoinVariability
 import it.pezzotta.coinflow.common.ErrorMessage
 import it.pezzotta.coinflow.common.CoinPlaceholder
 import it.pezzotta.coinflow.data.model.Coin
-import it.pezzotta.coinflow.data.repository.CoinMarketState
+import it.pezzotta.coinflow.ui.event.UiEvent
 import it.pezzotta.coinflow.prettyFormat
+import it.pezzotta.coinflow.ui.state.CoinMarketState
 import it.pezzotta.coinflow.ui.theme.CoinflowTheme
 
 @AndroidEntryPoint
@@ -84,6 +86,16 @@ class MainActivity : AppCompatActivity() {
 fun MarketScreen(coinViewModel: CoinViewModel) {
     val context = LocalContext.current
     val coinMarketState = coinViewModel.coinMarket
+
+    LaunchedEffect(Unit) {
+        coinViewModel.uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.ShowToast -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     Scaffold(
         modifier = Modifier
@@ -132,9 +144,6 @@ fun MarketScreen(coinViewModel: CoinViewModel) {
                 }
 
                 is CoinMarketState.Error -> {
-                    Toast.makeText(
-                        context, "${coinMarketState.throwable.message}", Toast.LENGTH_SHORT
-                    ).show()
                     ErrorMessage(coinViewModel, false, Coin(), Constants.DAYS, Constants.PRECISION)
                 }
             }

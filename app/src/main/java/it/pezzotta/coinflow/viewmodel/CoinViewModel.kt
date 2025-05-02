@@ -8,8 +8,11 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.pezzotta.coinflow.data.model.Coin
 import it.pezzotta.coinflow.data.model.CoinDetails
-import it.pezzotta.coinflow.data.repository.CoinMarketState
 import it.pezzotta.coinflow.data.repository.CoinRepository
+import it.pezzotta.coinflow.ui.event.UiEvent
+import it.pezzotta.coinflow.ui.state.CoinMarketState
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -31,6 +34,9 @@ class CoinViewModel @Inject constructor(
     var isRefreshing by mutableStateOf<Boolean>(false)
         private set
 
+    private val _uiEvent = MutableSharedFlow<UiEvent>()
+    val uiEvent = _uiEvent.asSharedFlow()
+
     fun getCoinMarket(refresh: Boolean) {
         viewModelScope.launch {
             if (refresh) {
@@ -40,6 +46,12 @@ class CoinViewModel @Inject constructor(
             val result = coinRepository.getCoinMarket()
             coinMarket = result
             isRefreshing = false
+
+            if (result is CoinMarketState.Error) {
+                result.throwable.message?.let {
+                    _uiEvent.emit(UiEvent.ShowToast(it))
+                }
+            }
         }
     }
 

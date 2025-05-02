@@ -2,8 +2,8 @@ import it.pezzotta.coinflow.data.model.Coin
 import it.pezzotta.coinflow.data.model.CoinData
 import it.pezzotta.coinflow.data.model.CoinDetails
 import it.pezzotta.coinflow.data.model.CoinMarketHistory
-import it.pezzotta.coinflow.data.repository.CoinMarketState
 import it.pezzotta.coinflow.data.repository.CoinRepository
+import it.pezzotta.coinflow.ui.state.CoinMarketState
 import it.pezzotta.coinflow.viewmodel.CoinViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

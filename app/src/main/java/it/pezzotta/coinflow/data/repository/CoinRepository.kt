@@ -6,6 +6,7 @@ import it.pezzotta.coinflow.data.model.CoinData
 import it.pezzotta.coinflow.data.model.CoinDetails
 import it.pezzotta.coinflow.data.model.CoinMarketHistory
 import it.pezzotta.coinflow.data.remote.CoinService
+import it.pezzotta.coinflow.ui.state.CoinMarketState
 import javax.inject.Inject
 
 class CoinRepository @Inject constructor(private val coinService: CoinService) {
@@ -95,10 +96,4 @@ class CoinRepository @Inject constructor(private val coinService: CoinService) {
             Result.failure(e)
         }
     }
-}
-
-sealed class CoinMarketState {
-    object Loading : CoinMarketState()
-    data class Success(val coins: List<Coin>) : CoinMarketState()
-    data class Error(val throwable: Throwable) : CoinMarketState()
 }
