@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package it.pezzotta.coinflow.activity
 
 import android.content.Context
@@ -14,7 +16,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -92,6 +93,8 @@ import it.pezzotta.coinflow.findMinAndMax
 import it.pezzotta.coinflow.getNumberOfDays
 import it.pezzotta.coinflow.noRippleClickable
 import it.pezzotta.coinflow.prettyFormat
+import it.pezzotta.coinflow.ui.event.UiEvent
+import it.pezzotta.coinflow.ui.state.CoinDetailsState
 import it.pezzotta.coinflow.ui.theme.GreenChart
 import it.pezzotta.coinflow.ui.theme.GreyChart
 import it.pezzotta.coinflow.ui.theme.RedChart
@@ -115,67 +118,88 @@ class DetailsActivity : AppCompatActivity() {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        coinViewModel.getCoinDetails(
+            refresh = false,
+            coin = coin,
+            days = Constants.DAYS,
+            precision = Constants.PRECISION,
+        )
+
         enableEdgeToEdge()
         setContent {
             CoinflowTheme {
-                Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
-                    TopAppBar(
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.background,
-                            titleContentColor = MaterialTheme.colorScheme.primary,
-                        ),
-                        navigationIcon = {
-                            IconButton(onClick = { finish() }) {
-                                Icon(
-                                    Icons.Filled.ArrowBack,
-                                    contentDescription = "Back",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        },
-                        title = {
-                            coin.name?.let {
-                                Text(it, fontSize = 24.sp)
-                            }
-                        },
-                    )
-                }) { innerPadding ->
-                    CoinDetailScreen(innerPadding, coinViewModel, coin)
-                }
+                CoinDetailScreen(coinViewModel, coin, back = { finish() })
             }
         }
     }
 }
 
 @Composable
-fun CoinDetailScreen(innerPadding: PaddingValues, coinViewModel: CoinViewModel, coin: Coin) {
+fun CoinDetailScreen(coinViewModel: CoinViewModel, coin: Coin, back: () -> Unit) {
     val context = LocalContext.current
-    val coinDetails = coinViewModel.coinDetails
+    val coinDetailsState = coinViewModel.coinDetailsState
 
-    LaunchedEffect(coin) { coinViewModel.getCoinDetails(coin, Constants.DAYS, Constants.PRECISION) }
-
-    Box(
-        modifier = Modifier
-            .padding(innerPadding)
-            .fillMaxSize()
-    ) {
-        when {
-            coinDetails == null -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+    LaunchedEffect(Unit) {
+        coinViewModel.uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.ShowToast -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
             }
+        }
+    }
 
-            coinDetails.isSuccess -> {
-                coinDetails.getOrNull()?.let { CoinDetail(context, coin = coin, coinDetails = it) }
-            }
+    Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
+        TopAppBar(
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.background,
+                titleContentColor = MaterialTheme.colorScheme.primary,
+            ),
+            navigationIcon = {
+                IconButton(onClick = back) {
+                    Icon(
+                        Icons.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            },
+            title = {
+                coin.name?.let {
+                    Text(it, fontSize = 24.sp)
+                }
+            },
+        )
+    }) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+        ) {
+            when (coinDetailsState) {
+                is CoinDetailsState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
 
-            coinDetails.isFailure -> {
-                Toast.makeText(
-                    context, "${coinDetails.exceptionOrNull()?.message}", Toast.LENGTH_LONG
-                ).show()
-                ErrorMessage(coinViewModel, true, coin, Constants.DAYS, Constants.PRECISION)
+                is CoinDetailsState.Success -> {
+                    val coinDetails = coinDetailsState.coinDetails
+                    CoinDetail(context, coin = coin, coinDetails = coinDetails)
+                }
+
+                is CoinDetailsState.Error -> {
+                    val retryCoinDetails = {
+                        coinViewModel.getCoinDetails(
+                            refresh = true,
+                            coin = coin,
+                            days = Constants.DAYS,
+                            precision = Constants.PRECISION
+                        )
+                    }
+                    ErrorMessage(retryCoinDetails)
+                }
             }
         }
     }
@@ -241,10 +265,13 @@ fun CoinDetail(context: Context, coin: Coin, coinDetails: CoinDetails) {
         CoinChart(coinDetails)
         Text(
             "${stringResource(R.string.last_update)}: ${
-            coin.lastUpdated?.let { convertToItalianTime(it) }
-        }", fontSize = 10.sp, modifier = Modifier
+                coin.lastUpdated?.let { convertToItalianTime(it) }
+            }",
+            fontSize = 10.sp,
+            modifier = Modifier
                 .align(Alignment.End)
-                .padding(bottom = 16.dp))
+                .padding(bottom = 16.dp),
+        )
         ExpandableDescription(coin, coinDetails.coinData.description?.en ?: "")
     }
 }
@@ -260,7 +287,11 @@ fun CoinChart(coinDetails: CoinDetails) {
     val firstChartValue: Double? = coinDetails.coinMarketHistory.prices?.first()?.get(1)
     val lastChartValue: Double? = coinDetails.coinMarketHistory.prices?.last()?.get(1)
 
-    Box(modifier = Modifier.height(400.dp).testTag("coin_detail_${coinDetails.coinData.id}")) {
+    Box(
+        modifier = Modifier
+            .height(400.dp)
+            .testTag("coin_detail_${coinDetails.coinData.id}")
+    ) {
         minChartValue?.let { minChartValue ->
             maxChartValue?.let { maxChartValue ->
                 firstChartValue?.let { firstChartValue ->
@@ -291,7 +322,8 @@ fun CoinChart(coinDetails: CoinDetails) {
                                 textStyle = TextStyle(color = MaterialTheme.colorScheme.onBackground)
                             ),
                             popupProperties = PopupProperties(
-                                containerColor = GreyChart, contentBuilder = { it.prettyFormat().format(2) }),
+                                containerColor = GreyChart,
+                                contentBuilder = { it.prettyFormat().format(2) }),
                             data = remember {
                                 listOf(
                                     Line(
@@ -373,7 +405,8 @@ fun CoinDetailPreview() {
         Surface {
             Box(modifier = Modifier.fillMaxSize()) {
                 CoinDetail(
-                    context = LocalContext.current, coin = Coin(
+                    context = LocalContext.current,
+                    coin = Coin(
                         name = "Coin 1",
                         symbol = "C1",
                         image = "",
@@ -382,19 +415,21 @@ fun CoinDetailPreview() {
                         priceChange24h = 1000.0,
                         priceChangePercentage24h = 1.0,
                         lastUpdated = "2008-10-31T23:00:00.000Z"
-                    ), coinDetails = CoinDetails(
+                    ),
+                    coinDetails = CoinDetails(
                         coinData = CoinData(
                             name = "Coin 1",
                             description = Description(en = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."),
                             image = Image(large = ""),
                             links = Links(homepage = listOf(""))
-                        ), coinMarketHistory = CoinMarketHistory(
+                        ),
+                        coinMarketHistory = CoinMarketHistory(
                             prices = listOf(
                                 listOf(1744375620000.0, 90000.00),
                                 listOf(1743779376258.0, 100000.00),
                             )
-                        )
-                    )
+                        ),
+                    ),
                 )
             }
         }

@@ -21,16 +21,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import it.pezzotta.coinflow.Constants
 import it.pezzotta.coinflow.R
-import it.pezzotta.coinflow.data.model.Coin
 import it.pezzotta.coinflow.ui.theme.CoinflowTheme
-import it.pezzotta.coinflow.viewmodel.CoinViewModel
 
 @Composable
-fun ErrorMessage(
-    coinViewModel: CoinViewModel?, isDetailsScreen: Boolean, coin: Coin, days: Int, precision: Int
-) {
+fun ErrorMessage(onRefresh: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.SpaceEvenly,
@@ -52,11 +47,9 @@ fun ErrorMessage(
                 modifier = Modifier
                     .fillMaxWidth(fraction = 0.5f)
                     .padding(top = 24.dp)
-                    .testTag("retry_button"), onClick = {
-                    if (!isDetailsScreen) coinViewModel?.getCoinMarket(refresh = true) else coinViewModel?.getCoinDetails(
-                        coin, days, precision
-                    )
-                }) {
+                    .testTag("retry_button"),
+                onClick = onRefresh,
+            ) {
                 Text(text = stringResource(R.string.retry))
             }
         }
@@ -68,9 +61,7 @@ fun ErrorMessage(
 fun ErrorMessagePreview() {
     CoinflowTheme {
         Surface {
-            ErrorMessage(
-                null, false, Coin(), Constants.DAYS, Constants.PRECISION
-            )
+            ErrorMessage({})
         }
     }
 }

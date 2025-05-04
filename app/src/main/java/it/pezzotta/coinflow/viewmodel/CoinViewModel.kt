@@ -7,9 +7,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.pezzotta.coinflow.data.model.Coin
-import it.pezzotta.coinflow.data.model.CoinDetails
 import it.pezzotta.coinflow.data.repository.CoinRepository
 import it.pezzotta.coinflow.ui.event.UiEvent
+import it.pezzotta.coinflow.ui.state.CoinDetailsState
 import it.pezzotta.coinflow.ui.state.CoinMarketState
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -25,10 +25,10 @@ class CoinViewModel @Inject constructor(
         getCoinMarket(refresh = false)
     }
 
-    var coinMarket by mutableStateOf<CoinMarketState>(CoinMarketState.Loading)
+    var coinMarketState by mutableStateOf<CoinMarketState>(CoinMarketState.Loading)
         private set
 
-    var coinDetails by mutableStateOf<Result<CoinDetails>?>(null)
+    var coinDetailsState by mutableStateOf<CoinDetailsState>(CoinDetailsState.Loading)
         private set
 
     var isRefreshing by mutableStateOf<Boolean>(false)
@@ -40,11 +40,11 @@ class CoinViewModel @Inject constructor(
     fun getCoinMarket(refresh: Boolean) {
         viewModelScope.launch {
             if (refresh) {
-                coinMarket = CoinMarketState.Loading
+                coinMarketState = CoinMarketState.Loading
                 isRefreshing = true
             }
             val result = coinRepository.getCoinMarket()
-            coinMarket = result
+            coinMarketState = result
             isRefreshing = false
 
             if (result is CoinMarketState.Error) {
@@ -55,10 +55,22 @@ class CoinViewModel @Inject constructor(
         }
     }
 
-    fun getCoinDetails(coin: Coin, days: Int, precision: Int) {
+    fun getCoinDetails(refresh: Boolean, coin: Coin, days: Int, precision: Int) {
         viewModelScope.launch {
+            if (refresh) {
+                coinDetailsState = CoinDetailsState.Loading
+                isRefreshing = true
+            }
+
             val result = coinRepository.getCoinDetails(coin, days, precision)
-            coinDetails = result
+            coinDetailsState = result
+            isRefreshing = false
+
+            if (result is CoinDetailsState.Error) {
+                result.throwable.message?.let {
+                    _uiEvent.emit(UiEvent.ShowToast(it))
+                }
+            }
         }
     }
 }

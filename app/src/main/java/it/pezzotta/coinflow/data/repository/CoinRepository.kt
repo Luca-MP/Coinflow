@@ -6,6 +6,7 @@ import it.pezzotta.coinflow.data.model.CoinData
 import it.pezzotta.coinflow.data.model.CoinDetails
 import it.pezzotta.coinflow.data.model.CoinMarketHistory
 import it.pezzotta.coinflow.data.remote.CoinService
+import it.pezzotta.coinflow.ui.state.CoinDetailsState
 import it.pezzotta.coinflow.ui.state.CoinMarketState
 import javax.inject.Inject
 
@@ -72,28 +73,26 @@ class CoinRepository @Inject constructor(private val coinService: CoinService) {
         }
     }
 
-    suspend fun getCoinDetails(
-        coin: Coin, days: Int, precision: Int
-    ): Result<CoinDetails> {
+    suspend fun getCoinDetails(coin: Coin, days: Int, precision: Int): CoinDetailsState {
         return try {
             val coinDataResult = getCoinData(coin)
             if (coinDataResult.isFailure) {
-                return Result.failure(coinDataResult.exceptionOrNull()!!)
+                return CoinDetailsState.Error(coinDataResult.exceptionOrNull()!!)
             }
 
             val coinMarketHistoryResult = getCoinMarketHistory(coin, days, precision)
             if (coinMarketHistoryResult.isFailure) {
-                return Result.failure(coinMarketHistoryResult.exceptionOrNull()!!)
+                return CoinDetailsState.Error(coinMarketHistoryResult.exceptionOrNull()!!)
             }
 
-            Result.success(
+            CoinDetailsState.Success(
                 CoinDetails(
                     coinData = coinDataResult.getOrThrow(),
                     coinMarketHistory = coinMarketHistoryResult.getOrThrow()
                 )
             )
         } catch (e: Exception) {
-            Result.failure(e)
+            CoinDetailsState.Error(e)
         }
     }
 }

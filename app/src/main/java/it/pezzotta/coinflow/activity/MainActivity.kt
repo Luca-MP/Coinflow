@@ -55,7 +55,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import dagger.hilt.android.AndroidEntryPoint
-import it.pezzotta.coinflow.Constants
 import it.pezzotta.coinflow.R
 import it.pezzotta.coinflow.viewmodel.CoinViewModel
 import it.pezzotta.coinflow.common.CoinVariability
@@ -85,7 +84,7 @@ class MainActivity : AppCompatActivity() {
 @Composable
 fun MarketScreen(coinViewModel: CoinViewModel) {
     val context = LocalContext.current
-    val coinMarketState = coinViewModel.coinMarket
+    val coinMarketState = coinViewModel.coinMarketState
 
     LaunchedEffect(Unit) {
         coinViewModel.uiEvent.collect { event ->
@@ -144,7 +143,8 @@ fun MarketScreen(coinViewModel: CoinViewModel) {
                 }
 
                 is CoinMarketState.Error -> {
-                    ErrorMessage(coinViewModel, false, Coin(), Constants.DAYS, Constants.PRECISION)
+                    val retryCoinMarket = { coinViewModel.getCoinMarket(refresh = true) }
+                    ErrorMessage(retryCoinMarket)
                 }
             }
         }

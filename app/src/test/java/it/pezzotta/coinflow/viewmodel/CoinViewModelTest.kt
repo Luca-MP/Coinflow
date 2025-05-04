@@ -3,6 +3,7 @@ import it.pezzotta.coinflow.data.model.CoinData
 import it.pezzotta.coinflow.data.model.CoinDetails
 import it.pezzotta.coinflow.data.model.CoinMarketHistory
 import it.pezzotta.coinflow.data.repository.CoinRepository
+import it.pezzotta.coinflow.ui.state.CoinDetailsState
 import it.pezzotta.coinflow.ui.state.CoinMarketState
 import it.pezzotta.coinflow.viewmodel.CoinViewModel
 import kotlinx.coroutines.Dispatchers
@@ -55,7 +56,7 @@ class CoinViewModelTest {
         coinViewModel = CoinViewModel(coinRepository)
 
         advanceUntilIdle()
-        val actualResult = coinViewModel.coinMarket
+        val actualResult = coinViewModel.coinMarketState
 
         assertEquals(marketResult, actualResult)
 
@@ -71,7 +72,7 @@ class CoinViewModelTest {
         coinViewModel = CoinViewModel(coinRepository)
 
         advanceUntilIdle()
-        val actualResult = coinViewModel.coinMarket
+        val actualResult = coinViewModel.coinMarketState
 
         assertTrue(actualResult is CoinMarketState.Error)
         assertEquals(marketResult, actualResult)
@@ -96,18 +97,18 @@ class CoinViewModelTest {
         val coinMarketHistoryJson = coinMarketHistory.bufferedReader().use { it.readText() }
         val coinMarketHistoryData = json.decodeFromString<CoinMarketHistory>(coinMarketHistoryJson)
 
-        val coinDetailsResult = Result.success(CoinDetails(coinDataData, coinMarketHistoryData))
+        val coinDetailsResult = CoinDetailsState.Success(CoinDetails(coinDataData, coinMarketHistoryData))
         val days = 7
         val precision = 8
 
         doReturn(coinDetailsResult).`when`(coinRepository).getCoinDetails(marketData.first(), days, precision)
         coinViewModel = CoinViewModel(coinRepository)
-        coinViewModel.getCoinDetails(marketData.first(), days, precision)
+        coinViewModel.getCoinDetails(false, marketData.first(), days, precision)
 
         advanceUntilIdle()
-        val actualResult = coinViewModel.coinDetails?.getOrNull()
+        val actualResult = coinViewModel.coinDetailsState
 
-        assertEquals(coinDetailsResult.getOrNull(), actualResult)
+        assertEquals(coinDetailsResult, actualResult)
 
         verify(coinRepository).getCoinDetails(marketData.first(), days, precision)
     }
@@ -115,19 +116,19 @@ class CoinViewModelTest {
     @Test
     fun `getCoinDetails should update coinDetails state with failure result`() = testScope.runTest {
         val exception = Exception("Error 429:")
-        val coinDetailsResult = Result.failure<CoinDetails>(exception)
+        val coinDetailsResult = CoinDetailsState.Error(exception)
         val days = 7
         val precision = 2
 
         doReturn(coinDetailsResult).`when`(coinRepository).getCoinDetails(Coin(), days, precision)
         coinViewModel = CoinViewModel(coinRepository)
-        coinViewModel.getCoinDetails(Coin(), days, precision)
+        coinViewModel.getCoinDetails(false, Coin(), days, precision)
 
         advanceUntilIdle()
-        val actualResult = coinViewModel.coinDetails
+        val actualResult = coinViewModel.coinDetailsState
 
-        assertTrue(actualResult?.isFailure == true)
-        assertEquals("Error 429:", actualResult?.exceptionOrNull()?.message)
+        assertTrue(actualResult is CoinDetailsState.Error)
+        assertEquals(coinDetailsResult, actualResult)
 
         verify(coinRepository).getCoinDetails(Coin(), days, precision)
     }
