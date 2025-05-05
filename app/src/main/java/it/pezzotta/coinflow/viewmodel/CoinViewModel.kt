@@ -56,6 +56,8 @@ class CoinViewModel @Inject constructor(
     }
 
     fun getCoinDetails(refresh: Boolean, coin: Coin, days: Int, precision: Int) {
+        if (coinDetailsState is CoinDetailsState.Error && !refresh) return
+
         viewModelScope.launch {
             if (refresh) {
                 coinDetailsState = CoinDetailsState.Loading

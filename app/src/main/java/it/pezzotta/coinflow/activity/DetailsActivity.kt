@@ -120,14 +120,6 @@ class DetailsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        coinViewModel.getCoinDetails(
-            refresh = false,
-            coin = coin,
-            days = Constants.DAYS,
-            precision = Constants.PRECISION,
-        )
-
         enableEdgeToEdge()
         setContent {
             CoinflowTheme {
@@ -143,6 +135,13 @@ fun CoinDetailScreen(coinViewModel: CoinViewModel, coin: Coin, back: () -> Unit)
     val coinDetailsState = coinViewModel.coinDetailsState
 
     LaunchedEffect(Unit) {
+        coinViewModel.getCoinDetails(
+            refresh = false,
+            coin = coin,
+            days = Constants.DAYS,
+            precision = Constants.PRECISION,
+        )
+
         coinViewModel.uiEvent.collect { event ->
             when (event) {
                 is UiEvent.ShowToast -> {
